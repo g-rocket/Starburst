@@ -11,8 +11,6 @@ import java.util.concurrent.*;
 import java.util.*;
 import java.util.List;
 
-import com.apple.eawt.*;
-
 import static java.lang.Math.*;
 
 public class Starburst extends JDesktopPane {
