@@ -38,7 +38,7 @@ public class Starburst extends JDesktopPane {
 	//2 -> colored lines
 	//3 -> center point
 
-	boolean RANDOMIZE_REMOVE_ORDER = false;
+	//boolean RANDOMFACTOR<0 = true;
 
 	boolean GEN_ONLY_ONE_THEN_SAVE_AND_EXIT_MODE = false;
 
@@ -125,21 +125,29 @@ public class Starburst extends JDesktopPane {
 			}
 		});
 		window.addKeyListener(new KeyAdapter(){
+			/*@Override public void keyReleased(KeyEvent e){
+				if(e.getKeyCode() == KeyEvent.VK_ENTER) s.mousePressed();
+				//if(e.getKeyCode() == KeyEvent.VK_ESCAPE) System.exit(0);
+			}*/
 			@Override public void keyTyped(KeyEvent e){
 				s.keyPressed(e.getKeyChar());
 			}
 		});
+		window.setAutoRequestFocus(true);
 		window.add(s);
 		window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		window.setUndecorated(true);
-		//window.setExtendedState(JFrame.MAXIMIZED_BOTH);
+		window.setExtendedState(JFrame.MAXIMIZED_BOTH);
 		gd.setFullScreenWindow(window);
+		window.setVisible(false);
+		window.setVisible(true);
 		//window.setAlwaysOnTop(true);
 		//window.toFront();
 		Rectangle r = gd.getDefaultConfiguration().getBounds();
 		window.setBounds(r);
+		window.toFront();
+		window.setAlwaysOnTop(true);
 		window.pack();
-		window.setVisible(true);
 		s.newImage();
 	}
 
@@ -261,6 +269,7 @@ public class Starburst extends JDesktopPane {
 	void setOtherParams() {
 		String curprops = String.format("%d, %d", 
 				SEED_METHOD, FINALIZATION_METHOD);
+		System.out.println(curprops);
 		String input = javax.swing.JOptionPane.showInternalInputDialog(this,OTHER_PARAM_CHANGE_MESSAGE);
 		if (input==null) return;
 		if (input.equalsIgnoreCase("random")) {
@@ -318,13 +327,13 @@ public class Starburst extends JDesktopPane {
 	}
 
 	void keyPressed(char key) {
+		if(key=='\n'||key=='\r') mousePressed();
 		if (key=='p'||key=='P') setParams();
 		else if (key=='s'||key=='S') setOtherParams();
 		/*else if (key=='d'||key=='D') {
 	   String input = javax.swing.JOptionPane.showInputDialog(this, "Input your new dimensions");
 	   String[] dims = input.split(",");
 	   size(Integer.parseInt(dims[0]),Integer.parseInt(dims[1]));
-
 	   current = new boolean[w][h];
 	   centerPair = new Pair(w/2, h/2);
 	   loadPixels();
@@ -375,7 +384,7 @@ public class Starburst extends JDesktopPane {
 			System.out.println("saved");
 		}
 	}
-
+	
 	int randomColor() {
 		return new Color(myRandom.nextInt(255),myRandom.nextInt(255),myRandom.nextInt(255)).getRGB();
 	}
@@ -506,20 +515,20 @@ public class Starburst extends JDesktopPane {
 	}
 
 	synchronized Pair getNextObject() {
-		if (opperations.size()>0) {
-			int index = RANDOMIZE_REMOVE_ORDER? myRandom.nextInt(opperations.size()): 0;
+		if (!opperations.isEmpty()) {
+			int index = RANDOMFACTOR<0? myRandom.nextInt(opperations.size()): 0;
 			return opperations.remove(index);
 		}
 		else {
 			return null;
 		}
 		//  Pair retval=null;
-		//  while (opperations.size ()>0&&(retval=opperations.remove(0/*(int)(Math.random()*opperations.size())*/))==null);
+		//  while (opperations.size()>0&&(retval=opperations.remove(0/*(int)(Math.random()*opperations.size())*/))==null);
 		//  return retval;
 	}
 
 	void fillAllPixels() {
-		while (opperations.size ()>0) {
+		while (!opperations.isEmpty()) {
 			Pair myPair=getNextObject();
 			if (myPair==null) continue;
 			int x=myPair.x, y=myPair.y;
@@ -527,16 +536,16 @@ public class Starburst extends JDesktopPane {
 			fillPixel(x, y);
 			boolean iscpx = false;//(x==centerPair.x&&y==centerPair.y);
 			if (((y+1)<canvas.getHeight())&&!current[x][y+1]) {
-				if (iscpx||(RANDOMFACTOR==0)||myRandom.nextDouble()*(RANDOMFACTOR+1)>1) opperations.add(new Pair(x, y+1));
+				if (RANDOMFACTOR<0||iscpx||(RANDOMFACTOR==0)||myRandom.nextDouble()*(RANDOMFACTOR+1)>1) opperations.add(new Pair(x, y+1));
 			}
 			if (((x+1)<canvas.getWidth())&&!current[x+1][y]) {
-				if (iscpx||(RANDOMFACTOR==0)||myRandom.nextDouble()*(RANDOMFACTOR+1)>1) opperations.add(new Pair(x+1, y));
+				if (RANDOMFACTOR<0||iscpx||(RANDOMFACTOR==0)||myRandom.nextDouble()*(RANDOMFACTOR+1)>1) opperations.add(new Pair(x+1, y));
 			}
 			if (((y-1)>=0)&&!current[x][y-1]) {
-				if (iscpx||(RANDOMFACTOR==0)||myRandom.nextDouble()*(RANDOMFACTOR+1)>1) opperations.add(new Pair(x, y-1));
+				if (RANDOMFACTOR<0||iscpx||(RANDOMFACTOR==0)||myRandom.nextDouble()*(RANDOMFACTOR+1)>1) opperations.add(new Pair(x, y-1));
 			}
 			if (((x-1)>=0)&&!current[x-1][y]) {
-				if (iscpx||(RANDOMFACTOR==0)||myRandom.nextDouble()*(RANDOMFACTOR+1)>1) opperations.add(new Pair(x-1, y));
+				if (RANDOMFACTOR<0||iscpx||(RANDOMFACTOR==0)||myRandom.nextDouble()*(RANDOMFACTOR+1)>1) opperations.add(new Pair(x-1, y));
 			}
 		}
 		doneCount++;
@@ -614,7 +623,7 @@ public class Starburst extends JDesktopPane {
 		else if (how==3) {
 			boolean[][] localcurrent = new boolean[canvas.getWidth()][canvas.getHeight()];
 			opperations.add(centerPair);
-			while (opperations.size ()>0) {
+			while (!opperations.isEmpty()) {
 				Pair myPair=getNextObject();
 				int x=myPair.x, y=myPair.y;
 				if (localcurrent[x][y]) continue;
