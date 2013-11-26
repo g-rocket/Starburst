@@ -1,20 +1,23 @@
 package net.clonecomputers.lab.starburst;
 
-import javax.imageio.*;
-import javax.swing.*;
+import static java.lang.Math.*;
 
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.*;
 import java.io.*;
-import java.util.concurrent.*;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.*;
 
-import static java.lang.Math.*;
+import javax.imageio.*;
+import javax.imageio.stream.*;
+import javax.swing.*;
+
+import com.apple.eawt.AppEvent.FullScreenEvent;
 
 public class Starburst extends JDesktopPane {
-	final javax.swing.JFileChooser fc = new javax.swing.JFileChooser();
+	//final javax.swing.JFileChooser fc = new javax.swing.JFileChooser();
 	Random myRandom = new Random();
 	BufferedImage canvas;
 
@@ -106,49 +109,126 @@ public class Starburst extends JDesktopPane {
 	private int[] pixels;
 
 	public static void main(String[] args) {
-		GraphicsDevice[] gda = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
-		GraphicsDevice gd = null;
-		int maxPixelsSoFar = 0;
-		for(GraphicsDevice g: gda){
-			DisplayMode d = g.getDisplayMode();
-			if(d.getWidth() * d.getHeight() > maxPixelsSoFar){
-				gd = g;
-				maxPixelsSoFar = d.getWidth() * d.getHeight();
+		SwingUtilities.invokeLater(new Runnable(){@Override public void run(){
+			GraphicsDevice[] gda = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
+			GraphicsDevice gd = null;
+			int maxPixelsSoFar = 0;
+			for(GraphicsDevice g: gda){
+				DisplayMode d = g.getDisplayMode();
+				if(d.getWidth() * d.getHeight() > maxPixelsSoFar){
+					gd = g;
+					maxPixelsSoFar = d.getWidth() * d.getHeight();
+				}
 			}
-		}
-		DisplayMode d = gd.getDisplayMode();
-		JFrame window = new JFrame();
-		final Starburst s = new Starburst(d.getWidth(),d.getHeight());
-		window.addMouseListener(new MouseAdapter(){
-			@Override public void mouseClicked(MouseEvent e){
-				s.mousePressed();
-			}
-		});
-		window.addKeyListener(new KeyAdapter(){
-			/*@Override public void keyReleased(KeyEvent e){
+			DisplayMode d = gd.getDisplayMode();
+			JFrame window = new JFrame();
+			//window.setBackground(Color.WHITE);
+			//window.setForeground(Color.WHITE);
+			final Starburst s = new Starburst(d.getWidth(),d.getHeight());
+			window.addMouseListener(new MouseAdapter(){
+				@Override public void mouseClicked(MouseEvent e){
+					s.mousePressed();
+				}
+			});
+			window.addKeyListener(new KeyAdapter(){
+				/*@Override public void keyReleased(KeyEvent e){
 				if(e.getKeyCode() == KeyEvent.VK_ENTER) s.mousePressed();
 				//if(e.getKeyCode() == KeyEvent.VK_ESCAPE) System.exit(0);
 			}*/
-			@Override public void keyTyped(KeyEvent e){
-				s.keyPressed(e.getKeyChar());
+				@Override public void keyTyped(KeyEvent e){
+					s.keyPressed(e.getKeyChar());
+				}
+			});
+			window.add(s);
+			toFullScreen(window,gd);
+			s.newImage();
+		}});
+	}
+
+	@SuppressWarnings("restriction")
+	public static void toFullScreen(JFrame window, GraphicsDevice gd){
+		if(System.getProperty("os.name").contains("OS X")) {
+			if(System.getProperty("os.version").startsWith("10.7") ||
+					System.getProperty("os.version").startsWith("10.8") ||
+					System.getProperty("os.version").startsWith("10.9") ||
+					System.getProperty("os.version").startsWith("10.10")){
+				System.out.println("trying to apple fullscreen");
+				window.setUndecorated(true);
+				window.pack();
+				window.setVisible(true);
+				com.apple.eawt.FullScreenUtilities.addFullScreenListenerTo(window,new com.apple.eawt.FullScreenAdapter(){
+					boolean working = false;
+					@Override
+					public void windowEnteredFullScreen(FullScreenEvent e) {
+						if(working){
+							working = false;
+							return;
+						};
+						if(!((JFrame)e.getWindow()).isUndecorated()){
+							working = true;
+							com.apple.eawt.Application.getApplication().requestToggleFullScreen(e.getWindow());
+						}
+					}
+					@Override
+					public void windowExitedFullScreen(FullScreenEvent e) {
+						if(working){
+							e.getWindow().dispose();
+							((JFrame)e.getWindow()).setUndecorated(true);
+							e.getWindow().pack();
+							e.getWindow().setVisible(true);
+							com.apple.eawt.Application.getApplication().requestToggleFullScreen(e.getWindow());
+							return;
+						};
+						if(((JFrame)e.getWindow()).isUndecorated()){
+							e.getWindow().dispose();
+							((JFrame)e.getWindow()).setUndecorated(false);
+							e.getWindow().setVisible(true);
+						}
+					}
+				});
+				com.apple.eawt.FullScreenUtilities.setWindowCanFullScreen(window,true);
+				com.apple.eawt.Application.getApplication().requestToggleFullScreen(window);
+				/*try {
+					Class<?> util = Class.forName("com.apple.eawt.FullScreenUtilities");
+					Class<?>[] params = new Class[]{Window.class, Boolean.TYPE};
+					Method method = util.getMethod("setWindowCanFullScreen", params);
+					method.invoke(util, window, true);
+					Class<?> application = Class.forName("com.apple.eawt.Application");
+					Method fullscreenMethod = application.getMethod("requestToggleFullScreen", new Class[]{Window.class});
+					fullscreenMethod.invoke(
+							application.getMethod("getApplication", new Class[0]).invoke(null), window);
+					window.pack();
+					window.setVisible(true);
+					return;
+				} catch (ClassNotFoundException e) {
+					e.printStackTrace();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}*/
+			} else {
+				//window.setAutoRequestFocus(true);
+				window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+				window.setUndecorated(true);
+				//window.setExtendedState(JFrame.MAXIMIZED_BOTH);
+				gd.setFullScreenWindow(window);
+				//window.setVisible(false);
+				window.toFront();
+				//window.setAlwaysOnTop(true);
+				//window.toFront();
+				Rectangle r = gd.getDefaultConfiguration().getBounds();
+				window.setBounds(r);
+				//window.toFront();
+				//window.setAlwaysOnTop(true);
+				//window.pack();
 			}
-		});
-		window.setAutoRequestFocus(true);
-		window.add(s);
-		window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		window.setUndecorated(true);
-		window.setExtendedState(JFrame.MAXIMIZED_BOTH);
-		gd.setFullScreenWindow(window);
-		window.setVisible(false);
-		window.setVisible(true);
-		//window.setAlwaysOnTop(true);
-		//window.toFront();
-		Rectangle r = gd.getDefaultConfiguration().getBounds();
-		window.setBounds(r);
-		window.toFront();
-		window.setAlwaysOnTop(true);
+		} else {
+			window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+			window.setUndecorated(true);
+			window.setExtendedState(JFrame.MAXIMIZED_BOTH);
+			window.toFront();
+		}
 		window.pack();
-		s.newImage();
+		window.setVisible(true);
 	}
 
 	public Starburst(int w,int h){
@@ -195,10 +275,22 @@ public class Starburst extends JDesktopPane {
 	}
 
 	private void save(String filename) {
-		ImageWriter i = ImageIO.getImageWritersBySuffix(filename.split(".")[filename.split(".").length-1]).next();
+		File f = new File(filename);
+		String[] fileParts = filename.split("\\.");
+		String suffix = fileParts[fileParts.length-1];
+		ImageWriter i;
+		Iterator<ImageWriter> writers = ImageIO.getImageWritersBySuffix(suffix);
+		if(writers.hasNext()) {
+			i = writers.next();
+		} else {
+			f = new File(filename+".png");
+			i = ImageIO.getImageWritersBySuffix("png").next();
+		}
 		try {
-			i.setOutput(new BufferedOutputStream(new FileOutputStream(filename)));
+			i.setOutput(new FileImageOutputStream(f));
 		} catch (FileNotFoundException e) {
+			throw new RuntimeException(e);
+		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
 		try {
@@ -232,6 +324,9 @@ public class Starburst extends JDesktopPane {
 
 	void newImage() {
 		System.out.println("newImage");
+		System.out.println(String.format("%.2f, %.2f, %.2f, %d, %d, %.2f, %d, %d", 
+				RBIAS, GBIAS, BBIAS, CENTERBIAS-1, 
+				GREYFACTOR, RANDOMFACTOR, SEED_METHOD, FINALIZATION_METHOD));
 		if (RANDOMPROPERTIES) randomizeProperties();
 		if (RANDOM_OTHER_PROPS) randomizeOtherProperties();
 		loadPixels();
@@ -246,7 +341,7 @@ public class Starburst extends JDesktopPane {
 		//cancelPhantomProcessorUsage();
 		System.out.println("end newImage");
 	}
-	
+
 	private void updatePixels() {
 		int i = 0;
 		for(int y = 0; y < canvas.getHeight(); y++){
@@ -260,7 +355,7 @@ public class Starburst extends JDesktopPane {
 	private void loadPixels() {
 		pixels = ((DataBufferInt) canvas.getData().getDataBuffer()).getData();
 	}
-	
+
 	@Override public void paintComponent(Graphics g){
 		super.paintComponent(g);
 		g.drawImage(canvas, 0, 0, this);
@@ -327,8 +422,8 @@ public class Starburst extends JDesktopPane {
 	}
 
 	void keyPressed(char key) {
-		if(key=='\n'||key=='\r') mousePressed();
-		if (key=='p'||key=='P') setParams();
+		if(key=='v'||key=='V') mousePressed();
+		else if (key=='p'||key=='P') setParams();
 		else if (key=='s'||key=='S') setOtherParams();
 		/*else if (key=='d'||key=='D') {
 	   String input = javax.swing.JOptionPane.showInputDialog(this, "Input your new dimensions");
@@ -354,23 +449,45 @@ public class Starburst extends JDesktopPane {
 	   }
 	   }*/
 		else if (key=='m'||key=='M') {
-			String input = javax.swing.JOptionPane.showInputDialog(this, "How many images do you want to generate?");
-			if (input == null) return;
-			fc.setFileSelectionMode(javax.swing.JFileChooser.DIRECTORIES_ONLY);
-			fc.showSaveDialog(this);
-			if (fc.getSelectedFile() == null) return;
-			String outputDirectory = fc.getSelectedFile().getAbsolutePath();
-			fc.setFileSelectionMode(javax.swing.JFileChooser.DIRECTORIES_ONLY);
-			genMany(outputDirectory, Integer.parseInt(input));
+			exec.execute(new Runnable(){@Override public void run(){
+				String input = javax.swing.JOptionPane.showInternalInputDialog(Starburst.this,
+						"How many images do you want to generate?");
+				if (input == null) return;
+				/*fc.setFileSelectionMode(javax.swing.JFileChooser.DIRECTORIES_ONLY);
+				fc.showSaveDialog(this);
+				if (fc.getSelectedFile() == null) return;
+				File outputDirectory = fc.getSelectedFile();
+				fc.setFileSelectionMode(javax.swing.JFileChooser.DIRECTORIES_ONLY);*/
+				System.out.println("beginning to create frame");
+				JInternalFrame frame = new JInternalFrame();
+				frame.setVisible(true);
+				Starburst.this.add(frame);
+				File outputDirectory = net.clonecomputers.lab.util.JavaFileChooserDialog.saveDirectory(frame);
+				frame.dispose();
+				if(outputDirectory == null) return;
+				System.out.println("about to gen");
+				genMany(outputDirectory.getAbsolutePath(), Integer.parseInt(input));
+			}});
 		} 
 		else if (key != 27) newImage();
 	}
 
 	void mousePressed() {
+		System.out.println("mousePressed");
 		//String savePath = selectOutput("select an output file");  // Opens file chooser
-		fc.showSaveDialog(this);
+		/*fc.showSaveDialog(this);
 		if (fc.getSelectedFile()==null) return;
-		String savePath = fc.getSelectedFile().getAbsolutePath();
+		String savePath = fc.getSelectedFile().getAbsolutePath();*/
+		exec.execute(new Runnable(){@Override public void run(){
+		JInternalFrame frame = new JInternalFrame();
+		frame.setVisible(true);
+		frame.toFront();
+		Starburst.this.add(frame);
+		File output = net.clonecomputers.lab.util.JavaFileChooserDialog.saveFile(frame);
+		frame.dispose();
+		//Starburst.this.requestFocus();
+		if(output == null) return;
+		String savePath = output.getAbsolutePath();
 		System.out.println("file selected");
 		if (savePath == null) {
 			// If a file was not selected
@@ -383,8 +500,9 @@ public class Starburst extends JDesktopPane {
 			save(savePath);
 			System.out.println("saved");
 		}
+		}});
 	}
-	
+
 	int randomColor() {
 		return new Color(myRandom.nextInt(255),myRandom.nextInt(255),myRandom.nextInt(255)).getRGB();
 	}
@@ -501,7 +619,7 @@ public class Starburst extends JDesktopPane {
 	void setPixel(int x, int y, int c) {
 		pixels[x+(y*canvas.getWidth())]=c;
 	}
-	
+
 	double lerp(double a, double b, double lerpVal){
 		return a + b*lerpVal;
 	}
@@ -695,19 +813,19 @@ public class Starburst extends JDesktopPane {
 		setPixel(x, y, color(r, g, b));
 		current[x][y]=true;
 	}
-	
+
 	private static int color(int r, int g, int b){
 		return (r << 16) + (g << 8) + b;
 	}
-	
+
 	private static int red(int rgb){
 		return (rgb & 0x00ff0000) >> 16;
 	}
-	
+
 	private static int green(int rgb){
 		return (rgb & 0x0000ff00) >> 8;
 	}
-	
+
 	private static int blue(int rgb){
 		return rgb & 0x000000ff;
 	}
