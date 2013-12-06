@@ -84,7 +84,7 @@
     <dependency>
       <groupId>net.clonecomputers.lab</groupId>
       <artifactId>Java-Utility-Library</artifactId>
-      <version>4.1.0</version>
+      <version>4.1.1</version>
     </dependency>
   </dependencies>
 </project>
