@@ -140,16 +140,30 @@ public class Starburst extends JDesktopPane {
 					s.mousePressed();
 				}
 			});
+			s.addMouseListener(new MouseAdapter(){
+				@Override public void mouseClicked(MouseEvent e){
+					s.mousePressed();
+				}
+			});
 			window.addKeyListener(new KeyAdapter(){
 				/*@Override public void keyReleased(KeyEvent e){
-				if(e.getKeyCode() == KeyEvent.VK_ENTER) s.mousePressed();
-				//if(e.getKeyCode() == KeyEvent.VK_ESCAPE) System.exit(0);
-			}*/
+					if(e.getKeyCode() == KeyEvent.VK_ENTER) s.mousePressed();
+					//if(e.getKeyCode() == KeyEvent.VK_ESCAPE) System.exit(0);
+				}*/
 				@Override public void keyTyped(KeyEvent e){
 					s.keyPressed(e.getKeyChar());
 				}
 			});
-			window.add(s);
+			s.addKeyListener(new KeyAdapter(){
+				/*@Override public void keyReleased(KeyEvent e){
+					if(e.getKeyCode() == KeyEvent.VK_ENTER) s.mousePressed();
+					//if(e.getKeyCode() == KeyEvent.VK_ESCAPE) System.exit(0);
+				}*/
+				@Override public void keyTyped(KeyEvent e){
+					s.keyPressed(e.getKeyChar());
+				}
+			});
+			window.setContentPane(s);
 			toFullScreen(window,gd);
 			s.newImage();
 		}});
@@ -158,10 +172,7 @@ public class Starburst extends JDesktopPane {
 	@SuppressWarnings("restriction")
 	public static void toFullScreen(JFrame window, GraphicsDevice gd){
 		if(System.getProperty("os.name").contains("OS X")) {
-			if(System.getProperty("os.version").startsWith("10.7") ||
-					System.getProperty("os.version").startsWith("10.8") ||
-					System.getProperty("os.version").startsWith("10.9") ||
-					System.getProperty("os.version").startsWith("10.10")){
+			if(Integer.parseInt(System.getProperty("os.version").split("[.]")[1]) >= 7){ // lion and above
 				System.out.println("trying to apple fullscreen");
 				window.setUndecorated(true);
 				window.pack();
@@ -215,7 +226,7 @@ public class Starburst extends JDesktopPane {
 				} catch (Exception e) {
 					e.printStackTrace();
 				}*/
-			} else {
+			} else { // Snow Leopard and below TODO: test this
 				//window.setAutoRequestFocus(true);
 				window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 				window.setUndecorated(true);
@@ -231,7 +242,7 @@ public class Starburst extends JDesktopPane {
 				//window.setAlwaysOnTop(true);
 				//window.pack();
 			}
-		} else {
+		} else { // Windows and Linux TODO: test this
 			window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 			window.setUndecorated(true);
 			window.setExtendedState(JFrame.MAXIMIZED_BOTH);
@@ -272,16 +283,37 @@ public class Starburst extends JDesktopPane {
 	}
 
 	void saveRandomName(String outputDirectory) {
-		String filename = String.format("%.2f, %.2f, %.2f, %d, %d, %.2f, %d, %d ", 
-				RBIAS, GBIAS, BBIAS, CENTERBIAS-1, 
-				GREYFACTOR, RANDOMFACTOR, SEED_METHOD, FINALIZATION_METHOD);
-		for (int i=0;i<4;i++) {
-			int thischar = myRandom.nextInt(36);
-			if (thischar>=26) filename+=(char)(thischar +'0');
-			else if ((myRandom.nextInt(2))>0) filename+=(char)(thischar+'a');
-			else filename+=(char)(thischar+'A');
+		String filename = String.format("%s/%.2f, %.2f, %.2f, %.2f, %d, %.2f, %d, %d %s.png",
+				outputDirectory,
+				RBIAS, GBIAS, BBIAS, CENTERBIAS-1, GREYFACTOR,
+				RANDOMFACTOR, SEED_METHOD, FINALIZATION_METHOD, randomstr(8));
+		save(filename);
+	}
+
+	private String randomstr(int len) {
+		StringBuilder str = new StringBuilder();
+		for (int i=0;i<len;i++) {
+			int thischar = myRandom.nextInt(62);
+			if(thischar < 10){
+				str.append((char)(thischar + '0'));
+				continue;
+			} else {
+				thischar -= 10;
+			}
+			if(thischar < 26){
+				str.append((char)(thischar + 'A'));
+				continue;
+			} else {
+				thischar -= 26;
+			}
+			if(thischar < 26){
+				str.append((char)(thischar + 'a'));
+				continue;
+			} else {
+				thischar -= 26;
+			}
 		}
-		save(outputDirectory+"/"+filename+".png");
+		return str.toString();
 	}
 
 	private void save(String filename) {
@@ -436,59 +468,78 @@ public class Starburst extends JDesktopPane {
 		else if (key=='p'||key=='P') setParams();
 		else if (key=='s'||key=='S') setOtherParams();
 		/*else if (key=='d'||key=='D') {
-	   String input = javax.swing.JOptionPane.showInputDialog(this, "Input your new dimensions");
-	   String[] dims = input.split(",");
-	   size(Integer.parseInt(dims[0]),Integer.parseInt(dims[1]));
-	   current = new boolean[w][h];
-	   centerPair = new Pair(w/2, h/2);
-	   loadPixels();
-	   falsifyCurrent();
-	   seedImage();
-	   fillOperations();
-	   fillAll();
-	   updatePixels();
-	   }*/
+			String input = javax.swing.JOptionPane.showInputDialog(this, "Input your new dimensions");
+			String[] dims = input.split(",");
+			size(Integer.parseInt(dims[0]),Integer.parseInt(dims[1]));
+			current = new boolean[w][h];
+			centerPair = new Pair(w/2, h/2);
+			loadPixels();
+			falsifyCurrent();
+			seedImage();
+			fillOperations();
+			fillAll();
+			updatePixels();
+		}*/
 		/*else if(key=='y'||key=='Y'){
-	   looping = !looping;
-	   if(looping){
-	   println("looping");
-	   loop();
-	   }else{
-	   println("not looping");
-	   noLoop();
-	   }
-	   }*/
+			looping = !looping;
+			if(looping){
+				println("looping");
+				loop();
+			}else{
+				println("not looping");
+				noLoop();
+			}
+		}*/
 		else if (key=='m'||key=='M') {
 			exec.execute(new Runnable(){@Override public void run(){
 				String input = javax.swing.JOptionPane.showInternalInputDialog(Starburst.this,
 						"How many images do you want to generate?");
 				if (input == null) return;
-				/*fc.setFileSelectionMode(javax.swing.JFileChooser.DIRECTORIES_ONLY);
-				fc.showSaveDialog(this);
-				if (fc.getSelectedFile() == null) return;
-				File outputDirectory = fc.getSelectedFile();
-				fc.setFileSelectionMode(javax.swing.JFileChooser.DIRECTORIES_ONLY);*/
-				System.out.println("beginning to create frame");
-				JInternalFrame frame = new JInternalFrame();
-				frame.setVisible(true);
-				Starburst.this.add(frame);
-				JFileChooser fc = new JFileChooser();
-				frame.add(fc);
-				fc.addActionListener(new ActionListener() {
-					@Override
-					public void actionPerformed(ActionEvent e) {
-						System.out.println("FileChooser action listener fired");
-					}
-				});
-				File outputDirectory = null;
-				//File outputDirectory = net.clonecomputers.lab.util.JavaFileChooserDialog.saveDirectory(frame);
-				frame.dispose();
+				File outputDirectory = chooseFile(JFileChooser.SAVE_DIALOG, JFileChooser.DIRECTORIES_ONLY).getParentFile();
 				if(outputDirectory == null) return;
 				System.out.println("about to gen");
 				genMany(outputDirectory.getAbsolutePath(), Integer.parseInt(input));
 			}});
 		} 
 		else if (key != 27) newImage();
+	}
+	
+	private File chooseFile(int dialogType, int selectionMode) {
+		final JInternalFrame fcFrame = new JInternalFrame();
+		fcFrame.putClientProperty("JInternalFrame.frameType", "optionDialog");
+		final JFileChooser fc = new JFileChooser();
+		fc.setFileSelectionMode(selectionMode);
+		fc.setDialogType(dialogType);
+		fc.setMultiSelectionEnabled(false);
+		fc.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				String cmd = e.getActionCommand();
+				if (JFileChooser.CANCEL_SELECTION.equals(cmd)) {
+					fcFrame.setVisible(false);
+					synchronized(fc) {
+						fc.notifyAll();
+					}
+				} else if (JFileChooser.APPROVE_SELECTION.equals(cmd)) {
+					fcFrame.setVisible(false);
+					synchronized(fc) {
+						fc.notifyAll();
+					}
+				}
+			}
+		});
+		fcFrame.add(fc);
+		fcFrame.pack();
+		this.add(fcFrame, JLayeredPane.MODAL_LAYER);
+		fcFrame.setLocation(this.getWidth()/2 - fcFrame.getWidth()/2, this.getHeight()/2 - fcFrame.getHeight()/2);
+		fcFrame.setVisible(true);
+		synchronized (fc) {
+			try {
+				fc.wait();
+			} catch (InterruptedException e1) {
+				return null;
+			}
+		}
+		return(fc.getSelectedFile());
 	}
 
 	void mousePressed() {
@@ -498,12 +549,7 @@ public class Starburst extends JDesktopPane {
 		if (fc.getSelectedFile()==null) return;
 		String savePath = fc.getSelectedFile().getAbsolutePath();*/
 		exec.execute(new Runnable(){@Override public void run(){
-			JInternalFrame frame = new JInternalFrame();
-			frame.setVisible(true);
-			frame.toFront();
-			Starburst.this.add(frame);
-			File output = net.clonecomputers.lab.util.JavaFileChooserDialog.saveFile(frame);
-			frame.dispose();
+			File output = chooseFile(JFileChooser.SAVE_DIALOG, JFileChooser.FILES_ONLY);
 			//Starburst.this.requestFocus();
 			if(output == null) return;
 			String savePath = output.getAbsolutePath();
