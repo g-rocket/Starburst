@@ -26,6 +26,8 @@
   </organization>
 
   <build>
+    <sourceDirectory>src/</sourceDirectory>
+    <testSourceDirectory>test/</testSourceDirectory>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -61,7 +63,7 @@
         <configuration>
           <archive>
             <manifest>
-              <mainClass>net.clonecomputers.lab.queueing.calculate.StatsMain</mainClass>
+              <mainClass>net.clonecomputers.lab.starburst.Starburst</mainClass>
             </manifest>
           </archive>
           <descriptorRefs>
