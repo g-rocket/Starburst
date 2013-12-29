@@ -113,7 +113,7 @@ public class Starburst extends JDesktopPane {
 			GraphicsDevice[] gda = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
 			GraphicsDevice gd = null;
 			int maxPixelsSoFar = 0;
-			for(GraphicsDevice g: gda){
+			for(GraphicsDevice g: gda){ // find biggest screen
 				DisplayMode d = g.getDisplayMode();
 				if(d.getWidth() * d.getHeight() > maxPixelsSoFar){
 					gd = g;
@@ -124,16 +124,37 @@ public class Starburst extends JDesktopPane {
 			JFrame window = new JFrame();
 			//window.setBackground(Color.WHITE);
 			//window.setForeground(Color.WHITE);
-			final Starburst s = 
-				(args.length == 1)? new Starburst(
-										Integer.parseInt(args[0].split(",")[0].trim()),
-										Integer.parseInt(args[0].split(",")[1].trim())):
-				(args.length == 2)? new Starburst(
-										Integer.parseInt(args[0].trim()),
-										Integer.parseInt(args[1].trim())):
-				/*		else	 */	new Starburst(
-							 			d.getWidth(),
-							 			d.getHeight());
+			Dimension size;
+			if(args.length == 0) {
+				size = new Dimension(d.getWidth(), d.getHeight());
+			} else if(args.length == 1) {
+				size = new Dimension(
+					Integer.parseInt(args[0].split(",")[0].trim()),
+					Integer.parseInt(args[0].split(",")[1].trim()));
+			} else if(args.length == 2) {
+				size = new Dimension(
+						Integer.parseInt(args[0].trim()),
+						Integer.parseInt(args[1].trim()));
+			} else try { // args.length > 2 means read from stdin
+				System.out.println("Input dimensions");
+				BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+				String arg0 = reader.readLine().trim();
+				if(arg0.matches("\\d+\\s*,\\s*\\d+")){
+					size = new Dimension(
+							Integer.parseInt(arg0.split(",")[0].trim()),
+							Integer.parseInt(arg0.split(",")[1].trim()));
+				} else if(arg0.matches("\\d+")) {
+					String arg1 = reader.readLine().trim();
+					size = new Dimension(
+							Integer.parseInt(arg0.trim()),
+							Integer.parseInt(arg1.trim()));
+				} else {
+					throw new IllegalArgumentException("Invalid dimensions");
+				}
+			} catch(IOException e) {
+				throw new RuntimeException(e);
+			}
+			final Starburst s = new Starburst(size);
 			
 			window.addMouseListener(new MouseAdapter(){
 				@Override public void mouseClicked(MouseEvent e){
@@ -272,6 +293,10 @@ public class Starburst extends JDesktopPane {
 			saveRandomName(SAVE_DIRECTORY);
 			System.exit(0);
 		}
+	}
+
+	public Starburst(Dimension size) {
+		this(size.width, size.height);
 	}
 
 	void genMany(String outputDirectory, int howMany) {
