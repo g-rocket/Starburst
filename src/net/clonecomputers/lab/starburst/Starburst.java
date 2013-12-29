@@ -72,7 +72,7 @@ public class Starburst extends JDesktopPane {
 	static double BWBIAS = (RBIAS+GBIAS+BBIAS)/3;//0 is no bias.  
 	// higher numbers for lighter, lower numbers for darker
 
-	static int CENTERBIAS = 10; //1 is no bias, higher means more towards center
+	static double CENTERBIAS = 10; //1 is no bias, higher means more towards center
 	// bigger numbers also take longer to make an image, but mean more toned down
 
 	static int GREYFACTOR = 0;//0 is no bias.  
@@ -108,7 +108,7 @@ public class Starburst extends JDesktopPane {
 	Pair centerPair;
 	private int[] pixels;
 
-	public static void main(String[] args) {
+	public static void main(final String[] args) {
 		SwingUtilities.invokeLater(new Runnable(){@Override public void run(){
 			GraphicsDevice[] gda = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
 			GraphicsDevice gd = null;
@@ -124,7 +124,17 @@ public class Starburst extends JDesktopPane {
 			JFrame window = new JFrame();
 			//window.setBackground(Color.WHITE);
 			//window.setForeground(Color.WHITE);
-			final Starburst s = new Starburst(d.getWidth(),d.getHeight());
+			final Starburst s = 
+				(args.length == 1)? new Starburst(
+										Integer.parseInt(args[0].split(",")[0].trim()),
+										Integer.parseInt(args[0].split(",")[1].trim())):
+				(args.length == 2)? new Starburst(
+										Integer.parseInt(args[0].trim()),
+										Integer.parseInt(args[1].trim())):
+				/*		else	 */	new Starburst(
+							 			d.getWidth(),
+							 			d.getHeight());
+			
 			window.addMouseListener(new MouseAdapter(){
 				@Override public void mouseClicked(MouseEvent e){
 					s.mousePressed();
@@ -305,7 +315,7 @@ public class Starburst extends JDesktopPane {
 		GBIAS = randoml(randomr(-.5, .5), randomr(-.5, .5), randomr(-1.5, -.5));
 		BBIAS = randoml(randomr(-.5, .5), randomr(-.5, .5), randomr(-1.5, -.5));
 		BWBIAS = (RBIAS+GBIAS+BBIAS)/3;
-		CENTERBIAS = (int)randoml(randomr(0, 15), randomr(10, 15), 0)+1;
+		CENTERBIAS = randoml(randomr(0, 15), randomr(10, 15), 0)+1;
 		RANDOMFACTOR = randoml(randomr(0, 1), randomr(0, 1), randomr(1, 2), randomr(0, 3), 20, 100);
 	}
 
@@ -324,8 +334,8 @@ public class Starburst extends JDesktopPane {
 
 	void newImage() {
 		System.out.println("newImage");
-		System.out.println(String.format("%.2f, %.2f, %.2f, %d, %d, %.2f, %d, %d", 
-				RBIAS, GBIAS, BBIAS, CENTERBIAS-1, 
+		System.out.println(String.format("%.2f, %.2f, %.2f, %.2f, %d, %.2f, %d, %d", 
+				RBIAS, GBIAS, BBIAS, CENTERBIAS, 
 				GREYFACTOR, RANDOMFACTOR, SEED_METHOD, FINALIZATION_METHOD));
 		if (RANDOMPROPERTIES) randomizeProperties();
 		if (RANDOM_OTHER_PROPS) randomizeOtherProperties();
@@ -390,8 +400,8 @@ public class Starburst extends JDesktopPane {
 	}
 
 	void setParams() {
-		String curprops = String.format("%.2f, %.2f, %.2f, %d, %d, %.2f", 
-				RBIAS, GBIAS, BBIAS, CENTERBIAS-1, 
+		String curprops = String.format("%.2f, %.2f, %.2f, %.2f, %d, %.2f", 
+				RBIAS, GBIAS, BBIAS, CENTERBIAS, 
 				GREYFACTOR, RANDOMFACTOR);
 		String input = javax.swing.JOptionPane.showInternalInputDialog(this,PARAM_CHANGE_MESSAGE);
 		if(input==null) return;
@@ -410,7 +420,7 @@ public class Starburst extends JDesktopPane {
 			RBIAS = Double.parseDouble(params[0].trim());
 			GBIAS = Double.parseDouble(params[1].trim());
 			BBIAS = Double.parseDouble(params[2].trim());
-			CENTERBIAS = Integer.parseInt(params[3].trim())+1;
+			CENTERBIAS = Double.parseDouble(params[3].trim());
 			GREYFACTOR = Integer.parseInt(params[4].trim());
 			RANDOMFACTOR = Double.parseDouble(params[5].trim());
 		}
@@ -462,7 +472,16 @@ public class Starburst extends JDesktopPane {
 				JInternalFrame frame = new JInternalFrame();
 				frame.setVisible(true);
 				Starburst.this.add(frame);
-				File outputDirectory = net.clonecomputers.lab.util.JavaFileChooserDialog.saveDirectory(frame);
+				JFileChooser fc = new JFileChooser();
+				frame.add(fc);
+				fc.addActionListener(new ActionListener() {
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						System.out.println("FileChooser action listener fired");
+					}
+				});
+				File outputDirectory = null;
+				//File outputDirectory = net.clonecomputers.lab.util.JavaFileChooserDialog.saveDirectory(frame);
 				frame.dispose();
 				if(outputDirectory == null) return;
 				System.out.println("about to gen");
@@ -479,27 +498,27 @@ public class Starburst extends JDesktopPane {
 		if (fc.getSelectedFile()==null) return;
 		String savePath = fc.getSelectedFile().getAbsolutePath();*/
 		exec.execute(new Runnable(){@Override public void run(){
-		JInternalFrame frame = new JInternalFrame();
-		frame.setVisible(true);
-		frame.toFront();
-		Starburst.this.add(frame);
-		File output = net.clonecomputers.lab.util.JavaFileChooserDialog.saveFile(frame);
-		frame.dispose();
-		//Starburst.this.requestFocus();
-		if(output == null) return;
-		String savePath = output.getAbsolutePath();
-		System.out.println("file selected");
-		if (savePath == null) {
-			// If a file was not selected
-			System.out.println("No output file was selected...");
-		} 
-		else {
-			//if (!savePath.endsWith(".png")) savePath+=".png";
-			// If a file was selected, save image to path
-			System.out.println("saving to "+savePath);
-			save(savePath);
-			System.out.println("saved");
-		}
+			JInternalFrame frame = new JInternalFrame();
+			frame.setVisible(true);
+			frame.toFront();
+			Starburst.this.add(frame);
+			File output = net.clonecomputers.lab.util.JavaFileChooserDialog.saveFile(frame);
+			frame.dispose();
+			//Starburst.this.requestFocus();
+			if(output == null) return;
+			String savePath = output.getAbsolutePath();
+			System.out.println("file selected");
+			if (savePath == null) {
+				// If a file was not selected
+				System.out.println("No output file was selected...");
+			} 
+			else {
+				//if (!savePath.endsWith(".png")) savePath+=".png";
+				// If a file was selected, save image to path
+				System.out.println("saving to "+savePath);
+				save(savePath);
+				System.out.println("saved");
+			}
 		}});
 	}
 
@@ -525,14 +544,14 @@ public class Starburst extends JDesktopPane {
 				//c = randomColor();
 				double x = myRandom.nextInt(canvas.getWidth()), y = myRandom.nextInt(canvas.getHeight());
 				double r = myRandom.nextInt(255), g = myRandom.nextInt(255), b = myRandom.nextInt(255);
-				double rx = myRandom.nextInt(6)-3, ry = myRandom.nextInt(6)-3;
-				double rr = myRandom.nextInt(6)-3, rg = myRandom.nextInt(6)-3, rb = myRandom.nextInt(6)-3;
+				double rx = myRandom.nextInt(7)-3, ry = myRandom.nextInt(7)-3;
+				double rr = myRandom.nextInt(7)-3, rg = myRandom.nextInt(7)-3, rb = myRandom.nextInt(6)-3;
 				for (int i = 0; i < LINE_LENGTH; i++) {
-					rx = lerp(rx, myRandom.nextInt(6)-3, .05);
-					ry = lerp(ry, myRandom.nextInt(6)-3, .05);
-					rr = lerp(rr, myRandom.nextInt(6)-3, .05);
-					rg = lerp(rg, myRandom.nextInt(6)-3, .05);
-					rb = lerp(rb, myRandom.nextInt(6)-3, .05);
+					rx = lerp(rx, myRandom.nextInt(7)-3, .05);
+					ry = lerp(ry, myRandom.nextInt(7)-3, .05);
+					rr = lerp(rr, myRandom.nextInt(7)-3, .05);
+					rg = lerp(rg, myRandom.nextInt(7)-3, .05);
+					rb = lerp(rb, myRandom.nextInt(7)-3, .05);
 					double d = sqrt(pow(rx, 2)+pow(ry, 2));
 					double cd = sqrt(pow(rr, 2)+pow(rg, 2)+pow(rb, 2));
 					rx=rx/d;
@@ -834,7 +853,7 @@ public class Starburst extends JDesktopPane {
 		return min(max(x, min), max);
 	}
 
-	int biasedRandom(int minVal, int maxVal, int biastocenter, double biasFactor) {
+	int biasedRandom(int minVal, int maxVal, double biastocenter, double biasFactor) {
 
 		if (maxVal<minVal) {
 			if (!SHARP) return ((maxVal+minVal)/2);
@@ -846,8 +865,8 @@ public class Starburst extends JDesktopPane {
 		a = .5+(randoml(-.5, .5)*pow(a, biastocenter));
 		//System.out.println(a);
 		double val = (a*(double)(maxVal-minVal+biasFactor+1))+minVal;
-		if (true) return (int)val;
-
+		return (int)val;
+		/*
 		//if (framenum!=0) return (int)randnum(maxVal-minVal+1)+minVal;
 		double n = 0F;
 		for (int i=0;i<biastocenter;i++) {
@@ -855,6 +874,7 @@ public class Starburst extends JDesktopPane {
 		}
 		return (int) n;
 		//return (int) (randnum((double)(maxVal-minVal+biasFactor+1))+minVal);
+		*/
 	}
 
 }
