@@ -14,8 +14,6 @@ import javax.imageio.*;
 import javax.imageio.stream.*;
 import javax.swing.*;
 
-import com.apple.eawt.AppEvent.FullScreenEvent;
-
 public class Starburst extends JDesktopPane {
 	//final javax.swing.JFileChooser fc = new javax.swing.JFileChooser();
 	Random myRandom = new Random();
@@ -193,7 +191,8 @@ public class Starburst extends JDesktopPane {
 	@SuppressWarnings("restriction")
 	public static void toFullScreen(JFrame window, GraphicsDevice gd){
 		if(System.getProperty("os.name").contains("OS X")) {
-			if(Integer.parseInt(System.getProperty("os.version").split("[.]")[1]) >= 7){ // lion and above
+			if(Integer.parseInt(System.getProperty("os.version").split("[.]")[1]) >= 7 && // lion and above
+			   Integer.parseInt(System.getProperty("java.specification.version").split("[.]")[1]) >= 7){ // java 7 and above
 				System.out.println("trying to apple fullscreen");
 				window.setUndecorated(true);
 				window.pack();
@@ -201,7 +200,7 @@ public class Starburst extends JDesktopPane {
 				com.apple.eawt.FullScreenUtilities.addFullScreenListenerTo(window,new com.apple.eawt.FullScreenAdapter(){
 					boolean working = false;
 					@Override
-					public void windowEnteredFullScreen(FullScreenEvent e) {
+					public void windowEnteredFullScreen(com.apple.eawt.AppEvent.FullScreenEvent e) {
 						if(working){
 							working = false;
 							return;
@@ -212,7 +211,7 @@ public class Starburst extends JDesktopPane {
 						}
 					}
 					@Override
-					public void windowExitedFullScreen(FullScreenEvent e) {
+					public void windowExitedFullScreen(com.apple.eawt.AppEvent.FullScreenEvent e) {
 						if(working){
 							e.getWindow().dispose();
 							((JFrame)e.getWindow()).setUndecorated(true);
@@ -248,7 +247,7 @@ public class Starburst extends JDesktopPane {
 					e.printStackTrace();
 				}*/
 			} else { // Snow Leopard and below TODO: test this
-				//window.setAutoRequestFocus(true);
+				window.setAutoRequestFocus(true);
 				window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 				window.setUndecorated(true);
 				//window.setExtendedState(JFrame.MAXIMIZED_BOTH);
