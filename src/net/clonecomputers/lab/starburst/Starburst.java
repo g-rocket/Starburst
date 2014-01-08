@@ -6,6 +6,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.*;
 import java.io.*;
+import java.lang.reflect.*;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.*;
@@ -247,7 +248,19 @@ public class Starburst extends JDesktopPane {
 					e.printStackTrace();
 				}*/
 			} else { // Snow Leopard and below TODO: test this
-				window.setAutoRequestFocus(true);
+				if(Integer.parseInt(System.getProperty("java.version").split("[.]")[1]) >= 7){
+					try{
+						Class<? extends JFrame> windowClass = window.getClass();
+						Method setAutoRequestFocusMethod = windowClass.getMethod("setAutoRequestFocus", boolean.class);
+						setAutoRequestFocusMethod.invoke(window, true);
+					} catch(InvocationTargetException e) {
+						// will never happen
+					} catch(NoSuchMethodException e) {
+						// can't find it, oh well.  cant call on <7 anyways
+					} catch(IllegalAccessException e) {
+						// will never happen
+					}
+				}
 				window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 				window.setUndecorated(true);
 				//window.setExtendedState(JFrame.MAXIMIZED_BOTH);
