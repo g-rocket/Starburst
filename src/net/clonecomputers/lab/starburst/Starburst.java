@@ -228,8 +228,8 @@ public class Starburst extends JDesktopPane {
 						}
 					}
 				});
-				com.apple.eawt.FullScreenUtilities.setWindowCanFullScreen(window,true);
-				com.apple.eawt.Application.getApplication().requestToggleFullScreen(window);
+				com.apple.eawt.FullScreenUtilities.setWindowCanFullScreen(window,true); //TODO: test compiling on non-mac
+				com.apple.eawt.Application.getApplication().requestToggleFullScreen(window);//TODO: compiles non-mac?
 				/*try {
 					Class<?> util = Class.forName("com.apple.eawt.FullScreenUtilities");
 					Class<?>[] params = new Class[]{Window.class, Boolean.TYPE};
