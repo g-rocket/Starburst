@@ -472,7 +472,10 @@ public class Starburst extends JDesktopPane {
 		String curprops = String.format("%.2f, %.2f, %.2f, %.2f, %d, %.2f", 
 				RBIAS, GBIAS, BBIAS, CENTERBIAS, 
 				GREYFACTOR, RANDOMFACTOR);
-		String input = javax.swing.JOptionPane.showInternalInputDialog(this,PARAM_CHANGE_MESSAGE);
+		Object in = javax.swing.JOptionPane.showInternalInputDialog(this,PARAM_CHANGE_MESSAGE,
+				"Set Parameters", JOptionPane.QUESTION_MESSAGE, null, null, curprops);
+		if(in == null) return;
+		String input = in.toString();
 		if(input==null) return;
 		if(input.equalsIgnoreCase("random")) {
 			RANDOMPROPERTIES = true;
@@ -639,9 +642,9 @@ public class Starburst extends JDesktopPane {
 					double cd = sqrt(pow(rr, 2)+pow(rg, 2)+pow(rb, 2));
 					rx=rx/d;
 					ry=ry/d;
-					rr=rr/d;
-					rg=rg/d;
-					rb=rb/d;
+					rr=rr/cd;
+					rg=rg/cd;
+					rb=rb/cd;
 					x = x+rx;
 					y = y+ry;
 					r = r+rx;
