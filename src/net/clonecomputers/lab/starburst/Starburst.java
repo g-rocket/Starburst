@@ -443,8 +443,11 @@ public class Starburst extends JDesktopPane {
 	void setOtherParams() {
 		String curprops = String.format("%d, %d", 
 				SEED_METHOD, FINALIZATION_METHOD);
-		System.out.println(curprops);
-		String input = javax.swing.JOptionPane.showInternalInputDialog(this,OTHER_PARAM_CHANGE_MESSAGE);
+		//System.out.println(curprops);
+		Object in = javax.swing.JOptionPane.showInternalInputDialog(this,OTHER_PARAM_CHANGE_MESSAGE,
+				"Set Parameters", JOptionPane.QUESTION_MESSAGE, null, null, curprops);
+		if(in == null) return;
+		String input = in.toString();
 		if (input==null) return;
 		if (input.equalsIgnoreCase("random")) {
 			RANDOM_OTHER_PROPS = true;
