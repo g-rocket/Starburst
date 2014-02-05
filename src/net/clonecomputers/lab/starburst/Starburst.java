@@ -495,7 +495,9 @@ public class Starburst extends JDesktopPane {
 				noLoop();
 			}
 		}*/
-		else if (key=='m'||key=='M') {
+		else if (key=='q'||key=='Q') {
+			System.exit(0);
+		} else if (key=='m'||key=='M') {
 			exec.execute(new Runnable(){@Override public void run(){
 				String input = javax.swing.JOptionPane.showInternalInputDialog(Starburst.this,
 						"How many images do you want to generate?");
@@ -505,8 +507,7 @@ public class Starburst extends JDesktopPane {
 				System.out.println("about to gen");
 				genMany(outputDirectory.getAbsolutePath(), Integer.parseInt(input));
 			}});
-		} 
-		else if (key != 27) newImage();
+		} else if (key != 27) newImage();
 	}
 	
 	private File chooseFile(int dialogType, int selectionMode) {
