@@ -189,64 +189,26 @@ public class Starburst extends JDesktopPane {
 		}});
 	}
 
-	@SuppressWarnings("restriction")
 	public static void toFullScreen(JFrame window, GraphicsDevice gd){
 		if(System.getProperty("os.name").contains("OS X")) {
 			if(Integer.parseInt(System.getProperty("os.version").split("[.]")[1]) >= 7 && // lion and above
 			   Integer.parseInt(System.getProperty("java.specification.version").split("[.]")[1]) >= 7){ // java 7 and above
 				System.out.println("trying to apple fullscreen");
-				window.setUndecorated(true);
-				window.pack();
-				window.setVisible(true);
-				com.apple.eawt.FullScreenUtilities.addFullScreenListenerTo(window,new com.apple.eawt.FullScreenAdapter(){
-					boolean working = false;
-					@Override
-					public void windowEnteredFullScreen(com.apple.eawt.AppEvent.FullScreenEvent e) {
-						if(working){
-							working = false;
-							return;
-						};
-						if(!((JFrame)e.getWindow()).isUndecorated()){
-							working = true;
-							com.apple.eawt.Application.getApplication().requestToggleFullScreen(e.getWindow());
-						}
-					}
-					@Override
-					public void windowExitedFullScreen(com.apple.eawt.AppEvent.FullScreenEvent e) {
-						if(working){
-							e.getWindow().dispose();
-							((JFrame)e.getWindow()).setUndecorated(true);
-							e.getWindow().pack();
-							e.getWindow().setVisible(true);
-							com.apple.eawt.Application.getApplication().requestToggleFullScreen(e.getWindow());
-							return;
-						};
-						if(((JFrame)e.getWindow()).isUndecorated()){
-							e.getWindow().dispose();
-							((JFrame)e.getWindow()).setUndecorated(false);
-							e.getWindow().setVisible(true);
-						}
-					}
-				});
-				com.apple.eawt.FullScreenUtilities.setWindowCanFullScreen(window,true); //TODO: test compiling on non-mac
-				com.apple.eawt.Application.getApplication().requestToggleFullScreen(window);//TODO: compiles non-mac?
-				/*try {
-					Class<?> util = Class.forName("com.apple.eawt.FullScreenUtilities");
-					Class<?>[] params = new Class[]{Window.class, Boolean.TYPE};
-					Method method = util.getMethod("setWindowCanFullScreen", params);
-					method.invoke(util, window, true);
-					Class<?> application = Class.forName("com.apple.eawt.Application");
-					Method fullscreenMethod = application.getMethod("requestToggleFullScreen", new Class[]{Window.class});
-					fullscreenMethod.invoke(
-							application.getMethod("getApplication", new Class[0]).invoke(null), window);
-					window.pack();
-					window.setVisible(true);
-					return;
+				try {
+					Class<?> aom = Class.forName("net.clonecomputers.lab.starburst.AppleOnlyMethods");
+					Method afs = aom.getMethod("appleFullscreen", JFrame.class);
+					afs.invoke(null,window);
+				} catch(NoSuchMethodException e) {
+					e.printStackTrace();
 				} catch (ClassNotFoundException e) {
 					e.printStackTrace();
-				} catch (Exception e) {
+				} catch (IllegalArgumentException e) {
 					e.printStackTrace();
-				}*/
+				} catch (IllegalAccessException e) {
+					e.printStackTrace();
+				} catch (InvocationTargetException e) {
+					e.printStackTrace();
+				}
 			} else { // Snow Leopard and below TODO: test this
 				if(Integer.parseInt(System.getProperty("java.version").split("[.]")[1]) >= 7){
 					try{
