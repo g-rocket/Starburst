@@ -8,6 +8,7 @@ public class AppleOnlyMethods {
 		window.setUndecorated(true);
 		window.pack();
 		window.setVisible(true);
+		window.setAutoRequestFocus(true);
 		com.apple.eawt.FullScreenUtilities.addFullScreenListenerTo(window,new com.apple.eawt.FullScreenAdapter(){
 			boolean working = false;
 			@Override

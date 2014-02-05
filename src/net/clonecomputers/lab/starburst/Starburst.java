@@ -209,7 +209,7 @@ public class Starburst extends JDesktopPane {
 				} catch (InvocationTargetException e) {
 					e.printStackTrace();
 				}
-			} else { // Snow Leopard and below TODO: test this
+			} else { // Snow Leopard and below OR apple java 6 and below TODO: test this on SL
 				if(Integer.parseInt(System.getProperty("java.version").split("[.]")[1]) >= 7){
 					try{
 						Class<? extends JFrame> windowClass = window.getClass();
