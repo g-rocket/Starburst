@@ -11,9 +11,10 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.*;
 
-import javax.imageio.*;
-import javax.imageio.stream.*;
 import javax.swing.*;
+
+import ar.com.hjg.pngj.*;
+import ar.com.hjg.pngj.chunks.*;
 
 public class Starburst extends JDesktopPane {
 	//final javax.swing.JFileChooser fc = new javax.swing.JFileChooser();
@@ -314,12 +315,60 @@ public class Starburst extends JDesktopPane {
 		}
 		return str.toString();
 	}
+	
+	private void copyParamsFromFile(File file) {
+		PngReader pngr = new PngReader(file);
+		  pngr.readSkippingAllRows(); // reads only metadata
+		  boolean foundParams = false;
+		  for (PngChunk c : pngr.getChunksList().getChunks()) {
+		      if (!ChunkHelper.isText(c)) continue;
+		      PngChunkTextVar ct = (PngChunkTextVar) c;
+		      String key = ct.getKey();
+		      String val = ct.getVal();
+		      if(key.equalsIgnoreCase("Parameters")) {
+		    	  System.out.printf("stored params: %s\n",val);
+		    	  String[] params = val.split("[,]");
+		    	  RBIAS = Double.parseDouble(params[0].trim());
+		    	  GBIAS = Double.parseDouble(params[1].trim());
+		    	  BBIAS = Double.parseDouble(params[2].trim());
+		    	  CENTERBIAS = Double.parseDouble(params[3].trim())+1;
+		    	  GREYFACTOR = Integer.parseInt(params[4].trim());
+		    	  RANDOMFACTOR = Double.parseDouble(params[5].trim());
+		    	  SEED_METHOD = Integer.parseInt(params[6].trim());
+		    	  FINALIZATION_METHOD = Integer.parseInt(params[7].trim());
+		    	  RANDOMPROPERTIES = false;
+		    	  RANDOM_OTHER_PROPS = false;
+		      }
+		  }
+		  pngr.end(); // not necessary here, but good practice
+		  if(!foundParams) System.err.println("failed to find params");
+	}
 
 	private void save(String filename) {
 		File f = new File(filename);
-		String[] fileParts = filename.split("\\.");
-		String suffix = fileParts[fileParts.length-1];
-		ImageWriter i;
+		
+		ImageInfo info = new ImageInfo(canvas.getWidth(), canvas.getHeight(),
+				8, canvas.getColorModel().hasAlpha()); // I _think_ the bit-depth is 24
+		PngWriter writer = new PngWriter(f, info);
+
+		loadPixels();
+		int[] buf = new int[canvas.getWidth()*3]; // one row
+		for(int i = 0; i < pixels.length; i++) {
+			buf[(i*3)%buf.length] = (pixels[i] & 0xFF0000)>>16; // R
+			buf[(i*3+1)%buf.length] = (pixels[i] & 0xFF00)>>8;  // G
+			buf[(i*3+2)%buf.length] = (pixels[i] & 0xFF);       // B
+			if((i*3)%buf.length == 0 && i>0) writer.writeRowInt(buf);
+		}
+		writer.writeRowInt(buf);
+		
+		PngMetadata meta = writer.getMetadata();
+		meta.setTimeNow();
+		meta.setText("Parameters",String.format("%.2f, %.2f, %.2f, %.2f, %d, %.2f, %d, %d",
+				RBIAS, GBIAS, BBIAS, CENTERBIAS-1, GREYFACTOR,
+				RANDOMFACTOR, SEED_METHOD, FINALIZATION_METHOD));
+		
+		writer.end();
+		/*ImageWriter i;
 		Iterator<ImageWriter> writers = ImageIO.getImageWritersBySuffix(suffix);
 		if(writers.hasNext()) {
 			i = writers.next();
@@ -338,7 +387,7 @@ public class Starburst extends JDesktopPane {
 			i.write(canvas);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
-		}
+		}*/
 	}
 
 	void randomizeProperties() {
@@ -472,29 +521,16 @@ public class Starburst extends JDesktopPane {
 		if(key=='v'||key=='V') mousePressed();
 		else if (key=='p'||key=='P') setParams();
 		else if (key=='s'||key=='S') setOtherParams();
-		/*else if (key=='d'||key=='D') {
-			String input = javax.swing.JOptionPane.showInputDialog(this, "Input your new dimensions");
-			String[] dims = input.split(",");
-			size(Integer.parseInt(dims[0]),Integer.parseInt(dims[1]));
-			current = new boolean[w][h];
-			centerPair = new Pair(w/2, h/2);
-			loadPixels();
-			falsifyCurrent();
-			seedImage();
-			fillOperations();
-			fillAll();
-			updatePixels();
-		}*/
-		/*else if(key=='y'||key=='Y'){
-			looping = !looping;
-			if(looping){
-				println("looping");
-				loop();
-			}else{
-				println("not looping");
-				noLoop();
-			}
-		}*/
+		else if (key=='c'||key=='C') {
+			exec.execute(new Runnable(){public void run(){
+				System.out.print("copying varibles from ");
+				File input = chooseFile(JFileChooser.OPEN_DIALOG, JFileChooser.FILES_ONLY);
+				System.out.println(input);
+				copyParamsFromFile(input);
+				System.out.println("done");
+				newImage();
+			}});
+		}
 		else if (key=='q'||key=='Q') {
 			System.exit(0);
 		} else if (key=='m'||key=='M') {
