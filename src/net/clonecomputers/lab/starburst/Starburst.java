@@ -42,6 +42,10 @@ public class Starburst extends JDesktopPane {
 	//3 -> center point
 
 	//boolean RANDOMFACTOR<0 = true;
+	
+	int REMOVE_ORDER = 0;
+	//0 -> random
+	//1 -> first
 
 	boolean GEN_ONLY_ONE_THEN_SAVE_AND_EXIT_MODE = false;
 
@@ -95,16 +99,16 @@ public class Starburst extends JDesktopPane {
 			"Please input the seeding and finalizations paramaters in the form" + "\n"
 					+ "(seed method, finalization method)" + "\n"
 					+ "or 'random' for random values or 'same' for current values, or cancel to exit unchanged" + "\n"
-					+ "# |  Seed Method  | Finalization" + "\n"
-					+ "-----------------------------------" + "\n"
-					+ "0 |   13 points   | squares then loop x,y" + "\n"
-					+ "1 |  black lines  | loop x,y" + "\n"
-					+ "2 | colored lines | fill with black" + "\n"
-					+ "3 | center point  | run normally from center point" + "\n";
+					+ "# |  Seed Method  | Remove order | Out of Range  | Finalization" + "\n"
+					+ "---------------------------------------------------------------" + "\n"
+					+ "0 |   13 points   |    first     |    average    | squares then loop x,y" + "\n"
+					+ "1 |  black lines  |    random    | pick one side | loop x,y" + "\n"
+					+ "2 | colored lines |              |               | fill with black" + "\n"
+					+ "3 | center point  |              |               | run normally from center point" + "\n";
 	int pixnum=0;
 	boolean current[][];
 	List<Pair> opperations;
-	ExecutorService exec = Executors.newFixedThreadPool(THREADNUM);
+	ExecutorService exec = Executors.newFixedThreadPool(THREADNUM+1); // +1 for system.in listener
 	Pair centerPair;
 	private int[] pixels;
 
@@ -155,7 +159,21 @@ public class Starburst extends JDesktopPane {
 				throw new RuntimeException(e);
 			}
 			final Starburst s = new Starburst(size);
-			
+			s.exec.execute(new Runnable() {
+				@Override public void run() {
+					BufferedReader r = new BufferedReader(new InputStreamReader(System.in));
+					while(true) {
+						try {
+							String arg = r.readLine().trim();
+							for(char c: arg.toCharArray()) {
+								s.keyPressed(c);
+							}
+						} catch (IOException e) {
+							throw new RuntimeException(e);
+						}
+					}
+				}
+			});
 			window.addMouseListener(new MouseAdapter(){
 				@Override public void mouseClicked(MouseEvent e){
 					s.mousePressed();
@@ -258,7 +276,7 @@ public class Starburst extends JDesktopPane {
 		pixels = new int[w*h];
 		canvas = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
 		this.setPreferredSize(new Dimension(w,h));
-		opperations = Collections.synchronizedList(new LinkedList<Pair>());
+		opperations = Collections.synchronizedList(new ArrayList<Pair>());
 		//background(randnum(256), randnum(256), randnum(256));
 		//background(0);
 		current = new boolean[canvas.getWidth()][canvas.getHeight()];
@@ -275,7 +293,7 @@ public class Starburst extends JDesktopPane {
 	}
 
 	void genMany(String outputDirectory, int howMany) {
-		for (int i=0;i<genNum;i++) {
+		for (int i=0;i<howMany;i++) {
 			newImage();
 			saveRandomName(outputDirectory);
 		}
@@ -287,7 +305,7 @@ public class Starburst extends JDesktopPane {
 				outputDirectory,
 				RBIAS, GBIAS, BBIAS, CENTERBIAS-1, GREYFACTOR,
 				RANDOMFACTOR, SEED_METHOD, FINALIZATION_METHOD, randomstr(8));
-		save(filename);
+		save(new File(filename));
 	}
 
 	private String randomstr(int len) {
@@ -326,16 +344,18 @@ public class Starburst extends JDesktopPane {
 		      String key = ct.getKey();
 		      String val = ct.getVal();
 		      if(key.equalsIgnoreCase("Parameters")) {
+		    	  foundParams = true;
 		    	  System.out.printf("stored params: %s\n",val);
 		    	  String[] params = val.split("[,]");
-		    	  RBIAS = Double.parseDouble(params[0].trim());
-		    	  GBIAS = Double.parseDouble(params[1].trim());
-		    	  BBIAS = Double.parseDouble(params[2].trim());
-		    	  CENTERBIAS = Double.parseDouble(params[3].trim())+1;
-		    	  GREYFACTOR = Integer.parseInt(params[4].trim());
-		    	  RANDOMFACTOR = Double.parseDouble(params[5].trim());
-		    	  SEED_METHOD = Integer.parseInt(params[6].trim());
-		    	  FINALIZATION_METHOD = Integer.parseInt(params[7].trim());
+		    	  int i = 0;
+		    	  if(i < params.length) RBIAS = Double.parseDouble(params[i++].trim());
+		    	  if(i < params.length) GBIAS = Double.parseDouble(params[1].trim());
+		    	  if(i < params.length) BBIAS = Double.parseDouble(params[2].trim());
+		    	  if(i < params.length) CENTERBIAS = Double.parseDouble(params[3].trim())+1;
+		    	  if(i < params.length) GREYFACTOR = Integer.parseInt(params[4].trim());
+		    	  if(i < params.length) RANDOMFACTOR = Double.parseDouble(params[5].trim());
+		    	  if(i < params.length) SEED_METHOD = Integer.parseInt(params[6].trim());
+		    	  if(i < params.length) FINALIZATION_METHOD = Integer.parseInt(params[7].trim());
 		    	  RANDOMPROPERTIES = false;
 		    	  RANDOM_OTHER_PROPS = false;
 		      }
@@ -344,28 +364,29 @@ public class Starburst extends JDesktopPane {
 		  if(!foundParams) System.err.println("failed to find params");
 	}
 
-	private void save(String filename) {
-		File f = new File(filename);
-		
+	private void save(File f) {
 		ImageInfo info = new ImageInfo(canvas.getWidth(), canvas.getHeight(),
 				8, canvas.getColorModel().hasAlpha()); // I _think_ the bit-depth is 24
 		PngWriter writer = new PngWriter(f, info);
 
 		loadPixels();
-		int[] buf = new int[canvas.getWidth()*3]; // one row
+		/*int[] buf = new int[canvas.getWidth()*3]; // one row
 		for(int i = 0; i < pixels.length; i++) {
 			buf[(i*3)%buf.length] = (pixels[i] & 0xFF0000)>>16; // R
 			buf[(i*3+1)%buf.length] = (pixels[i] & 0xFF00)>>8;  // G
 			buf[(i*3+2)%buf.length] = (pixels[i] & 0xFF);       // B
 			if((i*3)%buf.length == 0 && i>0) writer.writeRowInt(buf);
 		}
-		writer.writeRowInt(buf);
+		writer.writeRowInt(buf);*/
+		for(int row = 0; row < canvas.getHeight(); row++) {
+			writer.writeRowInt(Arrays.copyOfRange(pixels, row*canvas.getWidth()*3, (row+1)*canvas.getWidth()*3));
+		}
 		
 		PngMetadata meta = writer.getMetadata();
 		meta.setTimeNow();
-		meta.setText("Parameters",String.format("%.2f, %.2f, %.2f, %.2f, %d, %.2f, %d, %d",
+		meta.setText("Parameters",String.format("%.2f, %.2f, %.2f, %.2f, %d, %.2f, %d, %d, %d, %b",
 				RBIAS, GBIAS, BBIAS, CENTERBIAS-1, GREYFACTOR,
-				RANDOMFACTOR, SEED_METHOD, FINALIZATION_METHOD));
+				RANDOMFACTOR, SEED_METHOD, FINALIZATION_METHOD, REMOVE_ORDER, SHARP));
 		
 		writer.end();
 		/*ImageWriter i;
@@ -402,21 +423,24 @@ public class Starburst extends JDesktopPane {
 	void randomizeOtherProperties() {
 		SEED_METHOD = (int)randoml(0, 1, 2, 3);
 		FINALIZATION_METHOD = (int)randoml(0, 1, 2, 3);
+		REMOVE_ORDER = (int)randoml(0,1);
+		SHARP = (int)randoml(0,1) > 0;
 	}
 
 	double randomr(double min, double max) {
 		return myRandom.nextInt((int)(max-min))+min;
 	}
 
-	double randoml(double ... list) {
+	double randoml(double... list) {
 		return list[myRandom.nextInt(list.length)];
 	}
 
 	void newImage() {
+		long sTime = System.currentTimeMillis();
 		System.out.println("newImage");
-		System.out.println(String.format("%.2f, %.2f, %.2f, %.2f, %d, %.2f, %d, %d", 
+		System.out.println(String.format("%.2f, %.2f, %.2f, %.2f, %d, %.2f, %d, %d, %d, %b", 
 				RBIAS, GBIAS, BBIAS, CENTERBIAS, 
-				GREYFACTOR, RANDOMFACTOR, SEED_METHOD, FINALIZATION_METHOD));
+				GREYFACTOR, RANDOMFACTOR, SEED_METHOD, FINALIZATION_METHOD, REMOVE_ORDER, SHARP));
 		if (RANDOMPROPERTIES) randomizeProperties();
 		if (RANDOM_OTHER_PROPS) randomizeOtherProperties();
 		loadPixels();
@@ -430,20 +454,24 @@ public class Starburst extends JDesktopPane {
 		updatePixels();
 		//cancelPhantomProcessorUsage();
 		System.out.println("end newImage");
+		System.out.printf("took %d millis\n",System.currentTimeMillis()-sTime);
 	}
 
 	private void updatePixels() {
-		int i = 0;
+		//((DataBufferInt) canvas.getData().getDataBuffer()).
+		canvas.getRaster().setPixels(0, 0, canvas.getWidth(), canvas.getHeight(), pixels);
+		/*int i = 0;
 		for(int y = 0; y < canvas.getHeight(); y++){
 			for(int x = 0; x < canvas.getWidth(); x++){
 				canvas.setRGB(x, y, pixels[i++]);
 			}
-		}
+		}*/
 		this.repaint();
 	}
 
 	private void loadPixels() {
-		pixels = ((DataBufferInt) canvas.getData().getDataBuffer()).getData();
+		pixels = canvas.getRaster().getPixels(0, 0, canvas.getWidth(), canvas.getHeight(), (int[])null);
+		//pixels = ((DataBufferInt) canvas.getData().getDataBuffer()).getData();
 	}
 
 	@Override public void paintComponent(Graphics g){
@@ -452,8 +480,8 @@ public class Starburst extends JDesktopPane {
 	}
 
 	void setOtherParams() {
-		String curprops = String.format("%d, %d", 
-				SEED_METHOD, FINALIZATION_METHOD);
+		String curprops = String.format("%d, %d, %d, %d", 
+				SEED_METHOD, REMOVE_ORDER, SHARP?1:0, FINALIZATION_METHOD);
 		//System.out.println(curprops);
 		Object in = javax.swing.JOptionPane.showInternalInputDialog(this,OTHER_PARAM_CHANGE_MESSAGE,
 				"Set Parameters", JOptionPane.QUESTION_MESSAGE, null, null, curprops);
@@ -462,7 +490,7 @@ public class Starburst extends JDesktopPane {
 		if (input==null) return;
 		if (input.equalsIgnoreCase("random")) {
 			RANDOM_OTHER_PROPS = true;
-			newImage();
+			//newImage();
 			return;
 		}
 		if (input.equalsIgnoreCase("same")) {
@@ -473,13 +501,15 @@ public class Starburst extends JDesktopPane {
 		String[] params = input.split(",");
 		try {
 			SEED_METHOD = Integer.parseInt(params[0].trim());
-			FINALIZATION_METHOD = Integer.parseInt(params[1].trim());
+			REMOVE_ORDER = Integer.parseInt(params[1].trim());
+			SHARP = Integer.parseInt(params[2].trim())>0;
+			FINALIZATION_METHOD = Integer.parseInt(params[3].trim());
 		}
 		catch(Exception e) {
 			System.out.println(e+" in setParams()");
 		}
 		RANDOM_OTHER_PROPS = false;
-		newImage();
+		//newImage();
 	}
 
 	void setParams() {
@@ -493,7 +523,7 @@ public class Starburst extends JDesktopPane {
 		if(input==null) return;
 		if(input.equalsIgnoreCase("random")) {
 			RANDOMPROPERTIES = true;
-			newImage();
+			//newImage();
 			return;
 		}
 		if(input.equalsIgnoreCase("same")) {
@@ -514,7 +544,7 @@ public class Starburst extends JDesktopPane {
 			System.out.println(e+" in setParams()");
 		}
 		RANDOMPROPERTIES = false;
-		newImage();
+		//newImage();
 	}
 
 	void keyPressed(char key) {
@@ -523,11 +553,15 @@ public class Starburst extends JDesktopPane {
 		else if (key=='s'||key=='S') setOtherParams();
 		else if (key=='c'||key=='C') {
 			exec.execute(new Runnable(){public void run(){
-				System.out.print("copying varibles from ");
+				//System.out.print("copying variables from ");
 				File input = chooseFile(JFileChooser.OPEN_DIALOG, JFileChooser.FILES_ONLY);
-				System.out.println(input);
+				if(input == null) {
+					System.out.println("cancled");
+					return;
+				}
+				//System.out.println(input);
 				copyParamsFromFile(input);
-				System.out.println("done");
+				//System.out.println("done");
 				newImage();
 			}});
 		}
@@ -538,14 +572,34 @@ public class Starburst extends JDesktopPane {
 				String input = javax.swing.JOptionPane.showInternalInputDialog(Starburst.this,
 						"How many images do you want to generate?");
 				if (input == null) return;
-				File outputDirectory = chooseFile(JFileChooser.SAVE_DIALOG, JFileChooser.DIRECTORIES_ONLY).getParentFile();
+				File outputDirectory = chooseFile(JFileChooser.SAVE_DIALOG, JFileChooser.DIRECTORIES_ONLY);
 				if(outputDirectory == null) return;
-				System.out.println("about to gen");
+				if(isNamedAfterAncestor(outputDirectory)) {
+					outputDirectory = outputDirectory.getParentFile();
+				}
+				if(!outputDirectory.exists()) {
+					outputDirectory.mkdirs();
+				}
+				System.out.printf("about to generate %d images\n",Integer.parseInt(input));
 				genMany(outputDirectory.getAbsolutePath(), Integer.parseInt(input));
 			}});
 		} else if (key != 27) newImage();
 	}
 	
+	protected boolean isNamedAfterAncestor(File f) {
+		File ancestor = f;
+		do {
+			ancestor = ancestor.getParentFile();
+			if(ancestor.getName().equals(f.getName())) return true;
+		} while(p(ancestor.list().length) <= 1);
+		return false;
+	}
+
+	private static int p(int i) {
+		System.out.println(i);
+		return i;
+	}
+
 	private File chooseFile(int dialogType, int selectionMode) {
 		final JInternalFrame fcFrame = new JInternalFrame();
 		fcFrame.putClientProperty("JInternalFrame.frameType", "optionDialog");
@@ -593,18 +647,15 @@ public class Starburst extends JDesktopPane {
 		exec.execute(new Runnable(){@Override public void run(){
 			File output = chooseFile(JFileChooser.SAVE_DIALOG, JFileChooser.FILES_ONLY);
 			//Starburst.this.requestFocus();
-			if(output == null) return;
-			String savePath = output.getAbsolutePath();
-			System.out.println("file selected");
-			if (savePath == null) {
+			if(output == null) {
 				// If a file was not selected
 				System.out.println("No output file was selected...");
 			} 
 			else {
 				//if (!savePath.endsWith(".png")) savePath+=".png";
 				// If a file was selected, save image to path
-				System.out.println("saving to "+savePath);
-				save(savePath);
+				System.out.println("saving to "+output.getAbsolutePath());
+				save(output);
 				System.out.println("saved");
 			}
 		}});
@@ -720,11 +771,15 @@ public class Starburst extends JDesktopPane {
 	}
 
 	int getPixel(int x, int y) {
-		return pixels[x+(y*canvas.getWidth())];
+		int i = (x+(y*canvas.getWidth()))*3;
+		return color(pixels[i], pixels[i+1], pixels[i+2]);
 	}
 
 	void setPixel(int x, int y, int c) {
-		pixels[x+(y*canvas.getWidth())]=c;
+		int i = (x+(y*canvas.getWidth()))*3;
+		pixels[i]=red(c);
+		pixels[i+1]=green(c);
+		pixels[i+2]=blue(c);
 	}
 
 	double lerp(double a, double b, double lerpVal){
@@ -741,7 +796,7 @@ public class Starburst extends JDesktopPane {
 
 	synchronized Pair getNextObject() {
 		if (!opperations.isEmpty()) {
-			int index = RANDOMFACTOR<0? myRandom.nextInt(opperations.size()): 0;
+			int index = myRandom.nextInt(opperations.size());//RANDOMFACTOR<0? myRandom.nextInt(opperations.size()): 0;
 			return opperations.remove(index);
 		}
 		else {
@@ -789,8 +844,7 @@ public class Starburst extends JDesktopPane {
 					//System.out.println("running");
 					fillAllPixels();
 				}
-			}
-					);
+			});
 		}
 		/*try{
 	   exec.awaitTermination(10,TimeUnit.SECONDS);
@@ -803,7 +857,7 @@ public class Starburst extends JDesktopPane {
 			}
 		}
 		//while(doneCount<THREADNUM);
-		finalizePixels(FINALIZATION_METHOD);
+		if(0 != RANDOMFACTOR) finalizePixels(FINALIZATION_METHOD);
 		pixnum=0;
 	}
 
@@ -823,29 +877,30 @@ public class Starburst extends JDesktopPane {
 	}
 
 	void finalizePixels(int how) {
-		if (how==0) {
+		switch(how) {
+		case 0:
 			randomSeedPixels();
 			for (int x=0;x<canvas.getWidth();x++) {
 				for (int y=0;y<canvas.getHeight();y++) {
 					if (!current[x][y]) fillPixel(x, y);
 				}
 			}
-		} 
-		else if (how==1) {
+		break; 
+		case 1:
 			for (int x=0;x<canvas.getWidth();x++) {
 				for (int y=0;y<canvas.getHeight();y++) {
 					if (!current[x][y]) fillPixel(x, y);
 				}
 			}
-		} 
-		else if (how==2) {
+		break;
+		case 2:
 			for (int x=0;x<canvas.getWidth();x++) {
 				for (int y=0;y<canvas.getHeight();y++) {
 					if (!current[x][y]) setPixel(x, y, Color.BLACK.getRGB());
 				}
 			}
-		} 
-		else if (how==3) {
+		break;
+		case 3:
 			boolean[][] localcurrent = new boolean[canvas.getWidth()][canvas.getHeight()];
 			opperations.add(centerPair);
 			while (!opperations.isEmpty()) {
@@ -867,6 +922,7 @@ public class Starburst extends JDesktopPane {
 				}
 				localcurrent[x][y]=true;
 			}
+		break;
 		}
 	}
 
