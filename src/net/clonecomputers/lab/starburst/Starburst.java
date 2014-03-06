@@ -18,24 +18,26 @@ import ar.com.hjg.pngj.chunks.*;
 
 public class Starburst extends JDesktopPane {
 	//final javax.swing.JFileChooser fc = new javax.swing.JFileChooser();
-	Random myRandom = new Random();
-	BufferedImage canvas;
+	private Random myRandom = new Random();
+	private BufferedImage canvas;
 
-	int negvar = 15;
-	int posvar = 15;
+	private int negvar = 15;
+	private int posvar = 15;
 
-	boolean looping = false;
+	private boolean looping = false;
 
-	int doneCount=0;
+	private int doneCount=0;
 
-	int FINALIZATION_METHOD = 3;
+	private int FINALIZATION_METHOD = 3;
+	//-1 > random
 	//0 -> squares then loop x,y
 	//1 -> loop x,y
 	//2 -> fill with black
 	//3 -> run almost normal program from center
 	//4 -> do nothing
 
-	int SEED_METHOD = 2;
+	private int SEED_METHOD = 2;
+	//-1 > random
 	//0 -> 13 random points
 	//1 -> black lines
 	//2 -> colored lines
@@ -43,73 +45,75 @@ public class Starburst extends JDesktopPane {
 
 	//boolean RANDOMFACTOR<0 = true;
 	
-	int REMOVE_ORDER = 0;
+	private int REMOVE_ORDER = 0;
+	//-1 > random
 	//0 -> random
 	//1 -> first
 
-	boolean GEN_ONLY_ONE_THEN_SAVE_AND_EXIT_MODE = false;
+	private boolean GEN_ONLY_ONE_THEN_SAVE_AND_EXIT_MODE = false;
 
-	String SAVE_DIRECTORY = "/usr/share/images/clone-desktop/starburst-backgrounds/";
+	private String SAVE_DIRECTORY = "/usr/share/images/clone-desktop/starburst-backgrounds/";
 
-	boolean RANDOMPROPERTIES = true; // randomize image properties
+	private boolean RANDOMPROPERTIES = true; // randomize image properties
 	//each time w/in a list of good values
 
-	boolean RANDOM_OTHER_PROPS = true; // randomize seed and
+	private boolean RANDOM_OTHER_PROPS = true; // randomize seed and
 	//finalization properties each time w/in a list of good values
 
-	static int LINE_LENGTH = 1000;// length of a line
+	private int LINE_LENGTH = 1000;// length of a line
 	// 10000 gives a good length, usually, I think
 	// there is a lot of turning and doubling back, 
 	// so the lines are actually much shorter
-	static int AVERAGE_INVERSE_LINE_DENSITY = 300;
+	private int AVERAGE_INVERSE_LINE_DENSITY = 300;
 	// number of lines = (w*h)/(LINE_LENGTH*AVERAGE_INVERSE_LINE_DENSITY)
 
-	static boolean SHARP = true; //whether to average when 
+	private boolean SHARP = true; //whether to average when 
 	//no possible values are found or to choose a random endpoint
 
-	static double RBIAS = 0; //0 is no bias.  
+	private double RBIAS = 0; //0 is no bias.  
 	// higher numbers for lighter, lower numbers for darker
-	static double GBIAS = 0; //0 is no bias.  
+	private double GBIAS = 0; //0 is no bias.  
 	// higher numbers for lighter, lower numbers for darker
-	static double BBIAS = 0; //0 is no bias.  
+	private double BBIAS = 0; //0 is no bias.  
 	// higher numbers for lighter, lower numbers for darker
-	static double BWBIAS = (RBIAS+GBIAS+BBIAS)/3;//0 is no bias.  
+	private double BWBIAS = (RBIAS+GBIAS+BBIAS)/3;//0 is no bias.  
 	// higher numbers for lighter, lower numbers for darker
 
-	static double CENTERBIAS = 10; //1 is no bias, higher means more towards center
+	private double CENTERBIAS = 10; //1 is no bias, higher means more towards center
 	// bigger numbers also take longer to make an image, but mean more toned down
 
-	static int GREYFACTOR = 0;//0 is no bias.  
+	private int GREYFACTOR = 0;//0 is no bias.  
 	// bigger numbers for greyer, up to 127 for all grey
 
-	static double RANDOMFACTOR = 1.05;
+	private double RANDOMFACTOR = 1.05;
 	// the probabiity check that determines if a cell should be included
 	// return true RANDOMFACTOR / (RANDOMFACTOR + 1) of the time
 	// 0 is 100% chance
 
-	static int genNum = 30;
+	private int genNum = 30;
 
-	static int THREADNUM = 15;
+	private int THREADNUM = 15;
 
-	static final String PARAM_CHANGE_MESSAGE = 
+	private static final String PARAM_CHANGE_MESSAGE = 
 			"Please input the image generation paramaters in the form" + "\n"
 					+ "(red bias, green bias, blue bias, center bias, grey factor, random layout factor)" + "\n"
 					+ "or 'random' for random values or 'same' for current values, or cancel to exit unchanged";
-	static final String OTHER_PARAM_CHANGE_MESSAGE = 
+	private static final String OTHER_PARAM_CHANGE_MESSAGE = 
 			"Please input the seeding and finalizations paramaters in the form" + "\n"
 					+ "(seed method, finalization method)" + "\n"
 					+ "or 'random' for random values or 'same' for current values, or cancel to exit unchanged" + "\n"
 					+ "# |  Seed Method  | Remove order | Out of Range  | Finalization" + "\n"
 					+ "---------------------------------------------------------------" + "\n"
-					+ "0 |   13 points   |    first     |    average    | squares then loop x,y" + "\n"
-					+ "1 |  black lines  |    random    | pick one side | loop x,y" + "\n"
+					+ "0 |   13 points   |    random    |    average    | squares then loop x,y" + "\n"
+					+ "1 |  black lines  |    first     | pick one side | loop x,y" + "\n"
 					+ "2 | colored lines |              |               | fill with black" + "\n"
 					+ "3 | center point  |              |               | run normally from center point" + "\n";
-	int pixnum=0;
-	boolean current[][];
-	List<Pair> opperations;
-	ExecutorService exec = Executors.newFixedThreadPool(THREADNUM+1); // +1 for system.in listener
-	Pair centerPair;
+	private int pixnum=0;
+	private boolean current[][];
+	private List<Pair> opperations;
+	public static final ExecutorService exec = Executors.newCachedThreadPool();
+			//Executors.newFixedThreadPool(THREADNUM+1); // +1 for system.in listener
+	private Pair centerPair;
 	private int[] pixels;
 
 	public static void main(final String[] args) {
@@ -159,7 +163,7 @@ public class Starburst extends JDesktopPane {
 				throw new RuntimeException(e);
 			}
 			final Starburst s = new Starburst(size);
-			s.exec.execute(new Runnable() {
+			Starburst.exec.execute(new Runnable() {
 				@Override public void run() {
 					BufferedReader r = new BufferedReader(new InputStreamReader(System.in));
 					while(true) {
@@ -204,7 +208,7 @@ public class Starburst extends JDesktopPane {
 			});
 			window.setContentPane(s);
 			toFullScreen(window,gd);
-			s.newImage();
+			s.asyncNewImage();
 		}});
 	}
 
@@ -273,7 +277,7 @@ public class Starburst extends JDesktopPane {
 	   }catch(Exception e){
 	   throw new RuntimeException(e);
 	   }*/
-		pixels = new int[w*h];
+		//pixels = new int[w*h];
 		canvas = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
 		this.setPreferredSize(new Dimension(w,h));
 		opperations = Collections.synchronizedList(new ArrayList<Pair>());
@@ -423,7 +427,7 @@ public class Starburst extends JDesktopPane {
 	void randomizeOtherProperties() {
 		SEED_METHOD = (int)randoml(0, 1, 2, 3);
 		FINALIZATION_METHOD = (int)randoml(0, 1, 2, 3);
-		REMOVE_ORDER = (int)randoml(0,1);
+		REMOVE_ORDER = (int)randoml(0,0,0,1);
 		SHARP = (int)randoml(0,1) > 0;
 	}
 
@@ -434,8 +438,16 @@ public class Starburst extends JDesktopPane {
 	double randoml(double... list) {
 		return list[myRandom.nextInt(list.length)];
 	}
+	
+	public void asyncNewImage() {
+		exec.execute(new Runnable() {
+			@Override public void run() {
+				newImage();
+			}
+		});
+	}
 
-	void newImage() {
+	public void newImage() {
 		long sTime = System.currentTimeMillis();
 		System.out.println("newImage");
 		System.out.println(String.format("%.2f, %.2f, %.2f, %.2f, %d, %.2f, %d, %d, %d, %b", 
@@ -443,7 +455,8 @@ public class Starburst extends JDesktopPane {
 				GREYFACTOR, RANDOMFACTOR, SEED_METHOD, FINALIZATION_METHOD, REMOVE_ORDER, SHARP));
 		if (RANDOMPROPERTIES) randomizeProperties();
 		if (RANDOM_OTHER_PROPS) randomizeOtherProperties();
-		loadPixels();
+		pixels = new int[canvas.getWidth()*canvas.getHeight()*canvas.getColorModel().getNumComponents()];
+		//loadPixels();
 		falsifyCurrent();
 		seedImage(SEED_METHOD);
 		System.out.println("done seeding");
@@ -466,6 +479,7 @@ public class Starburst extends JDesktopPane {
 				canvas.setRGB(x, y, pixels[i++]);
 			}
 		}*/
+		//this.paintImmediately(0, 0, this.getWidth(), this.getHeight());
 		this.repaint();
 	}
 
@@ -583,7 +597,9 @@ public class Starburst extends JDesktopPane {
 				System.out.printf("about to generate %d images\n",Integer.parseInt(input));
 				genMany(outputDirectory.getAbsolutePath(), Integer.parseInt(input));
 			}});
-		} else if (key != 27) newImage();
+		} else if (key != 27) {
+			asyncNewImage();
+		}
 	}
 	
 	protected boolean isNamedAfterAncestor(File f) {
@@ -749,12 +765,17 @@ public class Starburst extends JDesktopPane {
 					//opperations.add(new Pair((int)x, (int)y));
 					current[(int)x][(int)y] = true;
 					setPixel((int)x, (int)y, c);
+					if(how == 2) {
+						canvas.setRGB((int)x, (int)y, c);
+						this.repaint((int)x, (int)y, 1, 1);
+					}
 				}
 			}
 		} 
 		else if (how == 3) {
 			opperations.add(new Pair(canvas.getWidth()/2, canvas.getHeight()/2));
 		}
+		updatePixels();//INFO: updatePixels() for show
 	}
 
 	void fillOperations() {
@@ -796,7 +817,11 @@ public class Starburst extends JDesktopPane {
 
 	synchronized Pair getNextObject() {
 		if (!opperations.isEmpty()) {
-			int index = myRandom.nextInt(opperations.size());//RANDOMFACTOR<0? myRandom.nextInt(opperations.size()): 0;
+			int index = 0;
+			if(REMOVE_ORDER==0) {
+				index = myRandom.nextInt(opperations.size());
+						//RANDOMFACTOR<0? myRandom.nextInt(opperations.size()): 0;
+			}
 			return opperations.remove(index);
 		}
 		else {
@@ -827,6 +852,7 @@ public class Starburst extends JDesktopPane {
 			if (((x-1)>=0)&&!current[x-1][y]) {
 				if (RANDOMFACTOR<0||iscpx||(RANDOMFACTOR==0)||myRandom.nextDouble()*(RANDOMFACTOR+1)>1) opperations.add(new Pair(x-1, y));
 			}
+			//if(Math.random() < .0005) updatePixels(); //INFO: updatePixels() for show
 		}
 		doneCount++;
 		if (doneCount==THREADNUM) {
@@ -837,6 +863,19 @@ public class Starburst extends JDesktopPane {
 	}
 
 	void fillAll() {
+		exec.execute(new Runnable() {
+			@Override
+			public void run() {
+				while(doneCount < THREADNUM) {
+					try {
+						Thread.sleep(500);
+					} catch (InterruptedException e) {
+						throw new RuntimeException(e);
+					}
+					updatePixels();
+				}
+			}
+		});
 		doneCount=0;
 		for (int i=0;i<THREADNUM;i++) {
 			exec.execute(new Runnable() {
@@ -930,9 +969,18 @@ public class Starburst extends JDesktopPane {
 		System.out.print("("+x+","+y+")");
 	}
 
+	/**
+	 * Fills one pixel
+	 * 
+	 * it works by finding the neighbors that have been filled in a plus shape around it
+	 * and then finding their maximum and minimum red green and blue values
+	 * and then picks a (biased to center) random value between those for the pixel.
+	 * @param x
+	 * @param y
+	 */
 	void fillPixel(int x, int y) {
 		int maxr=255, minr=0, maxg=255, ming=0, maxb=255, minb=0;
-		int neighborColors[]=new int[5];
+		int neighborColors[]=new int[4];
 		int neighborsFullYet=0;
 		if (((y+1)<canvas.getHeight())&&current[x][y+1]) {
 			neighborColors[neighborsFullYet++] = getPixel(x, y+1);
