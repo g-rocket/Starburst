@@ -76,8 +76,6 @@ public class Starburst extends JDesktopPane {
 	// higher numbers for lighter, lower numbers for darker
 	private double BBIAS = 0; //0 is no bias.  
 	// higher numbers for lighter, lower numbers for darker
-	private double BWBIAS = (RBIAS+GBIAS+BBIAS)/3;//0 is no bias.  
-	// higher numbers for lighter, lower numbers for darker
 
 	private double CENTERBIAS = 10; //1 is no bias, higher means more towards center
 	// bigger numbers also take longer to make an image, but mean more toned down
@@ -92,7 +90,7 @@ public class Starburst extends JDesktopPane {
 
 	private int genNum = 30;
 
-	private int THREADNUM = 15;
+	private int THREADNUM = 5;
 
 	private static final String PARAM_CHANGE_MESSAGE = 
 			"Please input the image generation paramaters in the form" + "\n"
@@ -296,7 +294,7 @@ public class Starburst extends JDesktopPane {
 		this(size.width, size.height);
 	}
 
-	void genMany(String outputDirectory, int howMany) {
+	private void genMany(String outputDirectory, int howMany) {
 		for (int i=0;i<howMany;i++) {
 			newImage();
 			saveRandomName(outputDirectory);
@@ -304,7 +302,7 @@ public class Starburst extends JDesktopPane {
 		System.exit(0);
 	}
 
-	void saveRandomName(String outputDirectory) {
+	private void saveRandomName(String outputDirectory) {
 		String filename = String.format("%s/%.2f, %.2f, %.2f, %.2f, %d, %.2f, %d, %d %s.png",
 				outputDirectory,
 				RBIAS, GBIAS, BBIAS, CENTERBIAS-1, GREYFACTOR,
@@ -414,28 +412,42 @@ public class Starburst extends JDesktopPane {
 			throw new RuntimeException(e);
 		}*/
 	}
-
-	void randomizeProperties() {
-		RBIAS = randoml(randomr(-.5, .5), randomr(-.5, .5), randomr(-1.5, -.5));
-		GBIAS = randoml(randomr(-.5, .5), randomr(-.5, .5), randomr(-1.5, -.5));
-		BBIAS = randoml(randomr(-.5, .5), randomr(-.5, .5), randomr(-1.5, -.5));
-		BWBIAS = (RBIAS+GBIAS+BBIAS)/3;
-		CENTERBIAS = randoml(randomr(0, 15), randomr(10, 15), 0)+1;
-		RANDOMFACTOR = randoml(randomr(0, 1), randomr(0, 1), randomr(1, 2), randomr(0, 3), 20, 100);
+	
+	private void randomizeProperties() {
+		randomizeRBias();
+		randomizeGBias();
+		randomizeBBias();
+		randomizeCenterBias();
+		randomizeRandomfactor();
 	}
 
-	void randomizeOtherProperties() {
-		SEED_METHOD = (int)randoml(0, 1, 2, 3);
-		FINALIZATION_METHOD = (int)randoml(0, 1, 2, 3);
-		REMOVE_ORDER = (int)randoml(0,0,0,1);
-		SHARP = (int)randoml(0,1) > 0;
+	private void randomizeOtherProperties() {
+		randomizeSeedMethod();
+		randomizeFinalization();
+		randomizeRemoveOrder();
+		randomizeSharp();
+	}
+	
+	private void randomizeRBias() { RBIAS = randoml(randomr(-.5, .5), randomr(-.5, .5), randomr(-1.5, 1.5)); }
+	private void randomizeGBias() { GBIAS = randoml(randomr(-.5, .5), randomr(-.5, .5), randomr(-1.5, 1.5)); }
+	private void randomizeBBias() { BBIAS = randoml(randomr(-.5, .5), randomr(-.5, .5), randomr(-1.5, 1.5)); }
+	private void randomizeCenterBias() { CENTERBIAS = randoml(randomr(0, 15), randomr(10, 15), 0)+1; }
+	private void randomizeRandomfactor() { RANDOMFACTOR = randoml(randomr(0, 1), randomr(0, 1), randomr(1, 2), randomr(0, 3), 20, 100); }
+	
+	private void randomizeSeedMethod() { SEED_METHOD = randoml(0, 1, 2, 3); }
+	private void randomizeFinalization() { FINALIZATION_METHOD = randoml(0, 1, 2, 3); }
+	private void randomizeRemoveOrder() { REMOVE_ORDER = randoml(0,0,0,1); }
+	private void randomizeSharp() { SHARP = myRandom.nextBoolean(); }
+
+	private double randomr(double min, double max) {
+		return (myRandom.nextDouble() * (max-min)) + min;
+	}
+	
+	private int randoml(int... list) {
+		return list[myRandom.nextInt(list.length)];
 	}
 
-	double randomr(double min, double max) {
-		return myRandom.nextInt((int)(max-min))+min;
-	}
-
-	double randoml(double... list) {
+	private double randoml(double... list) {
 		return list[myRandom.nextInt(list.length)];
 	}
 	
@@ -455,7 +467,19 @@ public class Starburst extends JDesktopPane {
 				GREYFACTOR, RANDOMFACTOR, SEED_METHOD, FINALIZATION_METHOD, REMOVE_ORDER, SHARP));
 		if (RANDOMPROPERTIES) randomizeProperties();
 		if (RANDOM_OTHER_PROPS) randomizeOtherProperties();
+		
+		if(RBIAS < 0) randomizeRBias();
+		if(GBIAS < 0) randomizeGBias();
+		if(BBIAS < 0) randomizeBBias();
+		if(CENTERBIAS < 0) randomizeCenterBias();
+		if(RANDOMFACTOR < 0) randomizeRandomfactor();
+
+		if(SEED_METHOD < 0) randomizeSeedMethod();
+		if(FINALIZATION_METHOD < 0) randomizeFinalization();
+		if(REMOVE_ORDER < 0) randomizeRemoveOrder();
+		
 		pixels = new int[canvas.getWidth()*canvas.getHeight()*canvas.getColorModel().getNumComponents()];
+		savePixels();
 		//loadPixels();
 		falsifyCurrent();
 		seedImage(SEED_METHOD);
@@ -464,13 +488,13 @@ public class Starburst extends JDesktopPane {
 		fillAll();
 		System.out.println("done generating");
 		//loop();
-		updatePixels();
+		savePixels();
 		//cancelPhantomProcessorUsage();
 		System.out.println("end newImage");
 		System.out.printf("took %d millis\n",System.currentTimeMillis()-sTime);
 	}
 
-	private void updatePixels() {
+	private void savePixels() {
 		//((DataBufferInt) canvas.getData().getDataBuffer()).
 		canvas.getRaster().setPixels(0, 0, canvas.getWidth(), canvas.getHeight(), pixels);
 		/*int i = 0;
@@ -492,8 +516,10 @@ public class Starburst extends JDesktopPane {
 		super.paintComponent(g);
 		g.drawImage(canvas, 0, 0, this);
 	}
+	
+	
 
-	void setOtherParams() {
+	private void setOtherParams() {
 		String curprops = String.format("%d, %d, %d, %d", 
 				SEED_METHOD, REMOVE_ORDER, SHARP?1:0, FINALIZATION_METHOD);
 		//System.out.println(curprops);
@@ -526,7 +552,7 @@ public class Starburst extends JDesktopPane {
 		//newImage();
 	}
 
-	void setParams() {
+	private void setParams() {
 		String curprops = String.format("%.2f, %.2f, %.2f, %.2f, %d, %.2f", 
 				RBIAS, GBIAS, BBIAS, CENTERBIAS, 
 				GREYFACTOR, RANDOMFACTOR);
@@ -561,7 +587,7 @@ public class Starburst extends JDesktopPane {
 		//newImage();
 	}
 
-	void keyPressed(char key) {
+	private void keyPressed(char key) {
 		if(key=='v'||key=='V') mousePressed();
 		else if (key=='p'||key=='P') setParams();
 		else if (key=='s'||key=='S') setOtherParams();
@@ -602,7 +628,7 @@ public class Starburst extends JDesktopPane {
 		}
 	}
 	
-	protected boolean isNamedAfterAncestor(File f) {
+	private static boolean isNamedAfterAncestor(File f) {
 		File ancestor = f;
 		do {
 			ancestor = ancestor.getParentFile();
@@ -654,7 +680,7 @@ public class Starburst extends JDesktopPane {
 		return(fc.getSelectedFile());
 	}
 
-	void mousePressed() {
+	private void mousePressed() {
 		System.out.println("mousePressed");
 		//String savePath = selectOutput("select an output file");  // Opens file chooser
 		/*fc.showSaveDialog(this);
@@ -677,11 +703,12 @@ public class Starburst extends JDesktopPane {
 		}});
 	}
 
-	int randomColor() {
-		return new Color(myRandom.nextInt(255),myRandom.nextInt(255),myRandom.nextInt(255)).getRGB();
+	private int randomColor() {
+		return myRandom.nextInt(0xffffff+1);
+			//new Color(myRandom.nextFloat(),myRandom.nextFloat(),myRandom.nextFloat()).getRGB();
 	}
 
-	void seedImage(int how) {
+	private void seedImage(int how) {
 		if (how == 0) {
 			//opperations.add(centerPair);
 			for (int i = 0; i < 13; i++) {
@@ -690,8 +717,7 @@ public class Starburst extends JDesktopPane {
 				current[p.x][p.y] = true;
 				setPixel(p.x, p.y, randomColor());
 			}
-		} 
-		else if (how == 1 || how == 2) {
+		} else if (how == 1 || how == 2) {
 			int c = (how == 1)? Color.BLACK.getRGB(): randomColor();
 			int numberOfLines = (canvas.getWidth()*canvas.getHeight())/(LINE_LENGTH*AVERAGE_INVERSE_LINE_DENSITY);
 			if (numberOfLines<1) numberOfLines = 1;
@@ -700,7 +726,7 @@ public class Starburst extends JDesktopPane {
 				double x = myRandom.nextInt(canvas.getWidth()), y = myRandom.nextInt(canvas.getHeight());
 				double r = myRandom.nextInt(255), g = myRandom.nextInt(255), b = myRandom.nextInt(255);
 				double rx = myRandom.nextInt(7)-3, ry = myRandom.nextInt(7)-3;
-				double rr = myRandom.nextInt(7)-3, rg = myRandom.nextInt(7)-3, rb = myRandom.nextInt(6)-3;
+				double rr = myRandom.nextInt(7)-3, rg = myRandom.nextInt(7)-3, rb = myRandom.nextInt(7)-3;
 				for (int i = 0; i < LINE_LENGTH; i++) {
 					rx = lerp(rx, myRandom.nextInt(7)-3, .05);
 					ry = lerp(ry, myRandom.nextInt(7)-3, .05);
@@ -771,14 +797,13 @@ public class Starburst extends JDesktopPane {
 					}
 				}
 			}
-		} 
-		else if (how == 3) {
+		} else if (how == 3) {
 			opperations.add(new Pair(canvas.getWidth()/2, canvas.getHeight()/2));
 		}
-		updatePixels();//INFO: updatePixels() for show
+		//updatePixels();//I/NFO: updatePixels() for show
 	}
 
-	void fillOperations() {
+	private void fillOperations() {
 		for (int x = 0; x < current.length; x++) {
 			for (int y = 0; y < current[0].length; y++) {
 				if (current[x][y]) {
@@ -791,23 +816,25 @@ public class Starburst extends JDesktopPane {
 		}
 	}
 
-	int getPixel(int x, int y) {
+	private int getPixel(int x, int y) {
 		int i = (x+(y*canvas.getWidth()))*3;
 		return color(pixels[i], pixels[i+1], pixels[i+2]);
 	}
 
-	void setPixel(int x, int y, int c) {
+	private void setPixel(int x, int y, int c) {
 		int i = (x+(y*canvas.getWidth()))*3;
 		pixels[i]=red(c);
 		pixels[i+1]=green(c);
 		pixels[i+2]=blue(c);
+		canvas.setRGB((int)x, (int)y, c);
+		this.repaint((int)x, (int)y, 1, 1);
 	}
 
-	double lerp(double a, double b, double lerpVal){
+	private static double lerp(double a, double b, double lerpVal){
 		return a + b*lerpVal;
 	}
 
-	void falsifyCurrent() {
+	private void falsifyCurrent() {
 		for (int i=0;i<canvas.getWidth();i++) {
 			for (int j=0;j<canvas.getHeight();j++) {
 				current[i][j]=false;
@@ -815,7 +842,7 @@ public class Starburst extends JDesktopPane {
 		}
 	}
 
-	synchronized Pair getNextObject() {
+	private synchronized Pair getNextObject() {
 		if (!opperations.isEmpty()) {
 			int index = 0;
 			if(REMOVE_ORDER==0) {
@@ -832,27 +859,25 @@ public class Starburst extends JDesktopPane {
 		//  return retval;
 	}
 
-	void fillAllPixels() {
+	private void fillAllPixels() {
 		while (!opperations.isEmpty()) {
 			Pair myPair=getNextObject();
 			if (myPair==null) continue;
 			int x=myPair.x, y=myPair.y;
 			if (current[x][y]) continue;
 			fillPixel(x, y);
-			boolean iscpx = false;//(x==centerPair.x&&y==centerPair.y);
 			if (((y+1)<canvas.getHeight())&&!current[x][y+1]) {
-				if (RANDOMFACTOR<0||iscpx||(RANDOMFACTOR==0)||myRandom.nextDouble()*(RANDOMFACTOR+1)>1) opperations.add(new Pair(x, y+1));
+				if (RANDOMFACTOR<=0||myRandom.nextDouble()*(RANDOMFACTOR+1)>1) opperations.add(new Pair(x, y+1));
 			}
 			if (((x+1)<canvas.getWidth())&&!current[x+1][y]) {
-				if (RANDOMFACTOR<0||iscpx||(RANDOMFACTOR==0)||myRandom.nextDouble()*(RANDOMFACTOR+1)>1) opperations.add(new Pair(x+1, y));
+				if (RANDOMFACTOR<=0||myRandom.nextDouble()*(RANDOMFACTOR+1)>1) opperations.add(new Pair(x+1, y));
 			}
 			if (((y-1)>=0)&&!current[x][y-1]) {
-				if (RANDOMFACTOR<0||iscpx||(RANDOMFACTOR==0)||myRandom.nextDouble()*(RANDOMFACTOR+1)>1) opperations.add(new Pair(x, y-1));
+				if (RANDOMFACTOR<=0||myRandom.nextDouble()*(RANDOMFACTOR+1)>1) opperations.add(new Pair(x, y-1));
 			}
 			if (((x-1)>=0)&&!current[x-1][y]) {
-				if (RANDOMFACTOR<0||iscpx||(RANDOMFACTOR==0)||myRandom.nextDouble()*(RANDOMFACTOR+1)>1) opperations.add(new Pair(x-1, y));
+				if (RANDOMFACTOR<=0||myRandom.nextDouble()*(RANDOMFACTOR+1)>1) opperations.add(new Pair(x-1, y));
 			}
-			//if(Math.random() < .0005) updatePixels(); //INFO: updatePixels() for show
 		}
 		doneCount++;
 		if (doneCount==THREADNUM) {
@@ -862,8 +887,8 @@ public class Starburst extends JDesktopPane {
 		}
 	}
 
-	void fillAll() {
-		exec.execute(new Runnable() {
+	private void fillAll() {
+		/*exec.execute(new Runnable() {
 			@Override
 			public void run() {
 				while(doneCount < THREADNUM) {
@@ -872,10 +897,10 @@ public class Starburst extends JDesktopPane {
 					} catch (InterruptedException e) {
 						throw new RuntimeException(e);
 					}
-					updatePixels();
+					updatePixels(); //INFO: updatePixels() for show
 				}
 			}
-		});
+		});*/
 		doneCount=0;
 		for (int i=0;i<THREADNUM;i++) {
 			exec.execute(new Runnable() {
@@ -900,7 +925,7 @@ public class Starburst extends JDesktopPane {
 		pixnum=0;
 	}
 
-	void randomSeedPixels() {
+	private void randomSeedPixels() {
 		for (int x=0;x<canvas.getWidth();x++) {
 			for (int y=0;y<canvas.getHeight();y++) {
 				if (!current[x][y]&&myRandom.nextInt(1000)<2) {
@@ -915,7 +940,7 @@ public class Starburst extends JDesktopPane {
 		}
 	}
 
-	void finalizePixels(int how) {
+	private void finalizePixels(int how) {
 		switch(how) {
 		case 0:
 			randomSeedPixels();
@@ -978,7 +1003,7 @@ public class Starburst extends JDesktopPane {
 	 * @param x
 	 * @param y
 	 */
-	void fillPixel(int x, int y) {
+	private void fillPixel(int x, int y) {
 		int maxr=255, minr=0, maxg=255, ming=0, maxb=255, minb=0;
 		int neighborColors[]=new int[4];
 		int neighborsFullYet=0;
@@ -994,6 +1019,11 @@ public class Starburst extends JDesktopPane {
 		if (((x-1)>=0)&&current[x-1][y]) {
 			neighborColors[neighborsFullYet++] = getPixel(x-1, y);
 		}
+		if(neighborsFullYet == 0) {
+			setPixel(x, y, randomColor());
+			current[x][y] = true;
+			return;
+		}
 		for (int i=0;i<neighborsFullYet;i++) {
 			int curCol = neighborColors[i];
 			int curr=red(curCol), curg=green(curCol), curb=blue(curCol);
@@ -1005,24 +1035,22 @@ public class Starburst extends JDesktopPane {
 			if (minb<curb) minb=(curb-negvar);
 		}
 
-		if (maxr<0) maxr=0;
-		if (maxr>255) maxr=255;
-		if (minr<0) minr=0;
-		if (minr>255) minr=255;
-		if (maxg<0) maxg=0;
-		if (maxg>255) maxg=255;
-		if (ming<0) ming=0;
-		if (ming>255) ming=255;
-		if (maxb<0) maxb=0;
-		if (maxb>255) maxb=255;
-		if (minb<0) minb=0;
-		if (minb>255) minb=255;
+		maxr = clamp(0,maxr,255);
+		minr = clamp(0,minr,255);
+		maxg = clamp(0,maxg,255);
+		ming = clamp(0,ming,255);
+		maxb = clamp(0,maxb,255);
+		minb = clamp(0,minb,255);
 
-		int r=bound(biasedRandom(minr, maxr, CENTERBIAS, RBIAS), GREYFACTOR, 255-GREYFACTOR);
-		int g=bound(biasedRandom(ming, maxg, CENTERBIAS, GBIAS), GREYFACTOR, 255-GREYFACTOR);
-		int b=bound(biasedRandom(minb, maxb, CENTERBIAS, BBIAS), GREYFACTOR, 255-GREYFACTOR);
+		int r=clamp(GREYFACTOR, biasedRandom(minr, maxr, CENTERBIAS, RBIAS), 255-GREYFACTOR);
+		int g=clamp(GREYFACTOR, biasedRandom(ming, maxg, CENTERBIAS, GBIAS), 255-GREYFACTOR);
+		int b=clamp(GREYFACTOR, biasedRandom(minb, maxb, CENTERBIAS, BBIAS), 255-GREYFACTOR);
 		setPixel(x, y, color(r, g, b));
 		current[x][y]=true;
+	}
+
+	private static int clamp(int min, int x, int max) {
+		return (x <= min)? min: (x >= max)? max: x;
 	}
 
 	private static int color(int r, int g, int b){
@@ -1041,16 +1069,14 @@ public class Starburst extends JDesktopPane {
 		return rgb & 0x000000ff;
 	}
 
-	int bound(int x, int min, int max) {
-		return min(max(x, min), max);
-	}
-
 	int biasedRandom(int minVal, int maxVal, double biastocenter, double biasFactor) {
 
 		if (maxVal<minVal) {
-			if (!SHARP) return ((maxVal+minVal)/2);
-			//else if (randnum(2)>1) return minVal;
-			else return maxVal;
+			if (SHARP) {
+				return myRandom.nextBoolean()? minVal: maxVal;
+			} else {
+				return ((maxVal+minVal)/2);
+			}
 		}
 
 		double a = myRandom.nextDouble();
