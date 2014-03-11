@@ -2,6 +2,8 @@ package net.clonecomputers.lab.starburst;
 
 import javax.swing.*;
 
+import com.apple.eawt.*;
+
 public class AppleOnlyMethods {
 	@SuppressWarnings("restriction")
 	public static void appleFullscreen(JFrame window) {
@@ -9,7 +11,7 @@ public class AppleOnlyMethods {
 		window.pack();
 		window.setVisible(true);
 		window.setAutoRequestFocus(true);
-		com.apple.eawt.FullScreenUtilities.addFullScreenListenerTo(window,new com.apple.eawt.FullScreenAdapter(){
+		FullScreenUtilities.addFullScreenListenerTo(window,new com.apple.eawt.FullScreenAdapter(){
 			boolean working = false;
 			@Override
 			public void windowEnteredFullScreen(com.apple.eawt.AppEvent.FullScreenEvent e) {
@@ -39,8 +41,8 @@ public class AppleOnlyMethods {
 				}
 			}
 		});
-		com.apple.eawt.FullScreenUtilities.setWindowCanFullScreen(window,true); //TODO: test compiling on non-mac
-		com.apple.eawt.Application.getApplication().requestToggleFullScreen(window);//TODO: compiles non-mac?
+		FullScreenUtilities.setWindowCanFullScreen(window,true); //TODO: test compiling on non-mac
+		Application.getApplication().requestToggleFullScreen(window);//TODO: compiles non-mac?
 		/*try {
 			Class<?> util = Class.forName("com.apple.eawt.FullScreenUtilities");
 			Class<?>[] params = new Class[]{Window.class, Boolean.TYPE};
@@ -58,5 +60,10 @@ public class AppleOnlyMethods {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}*/
+	}
+	
+	@SuppressWarnings("restriction")
+	public static void appleForeground() {
+		Application.getApplication().requestForeground(true);
 	}
 }
