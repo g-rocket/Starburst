@@ -599,6 +599,9 @@ public class Starburst extends JDesktopPane {
 		case 's':
 			setOtherParams();
 			break;
+		case 'o':
+			generateFromImage();
+			break;
 		case 'c':
 			exec.execute(new Runnable(){public void run(){
 				//System.out.print("copying variables from ");
@@ -638,6 +641,14 @@ public class Starburst extends JDesktopPane {
 		}
 	}
 	
+	private void generateFromImage() {
+		File f = chooseFile(JFileChooser.OPEN_DIALOG, JFileChooser.FILES_ONLY);
+		PngReaderInt r = new PngReaderInt(f);
+		int[] imagePixels = new int[r.imgInfo.samplesPerRow];
+		//r.r
+		
+	}
+
 	private static boolean isNamedAfterAncestor(File f) {
 		File ancestor = f;
 		do {
@@ -655,6 +666,7 @@ public class Starburst extends JDesktopPane {
 	private File chooseFile(int dialogType, int selectionMode) {
 		final JInternalFrame fcFrame = new JInternalFrame();
 		fcFrame.putClientProperty("JInternalFrame.frameType", "optionDialog");
+		final boolean[] wasCanceled = new boolean[1];
 		final JFileChooser fc = new JFileChooser();
 		fc.setFileSelectionMode(selectionMode);
 		fc.setDialogType(dialogType);
@@ -664,11 +676,13 @@ public class Starburst extends JDesktopPane {
 				String cmd = e.getActionCommand();
 				if (JFileChooser.CANCEL_SELECTION.equals(cmd)) {
 					fcFrame.setVisible(false);
+					wasCanceled[0] = true;
 					synchronized(fc) {
 						fc.notifyAll();
 					}
 				} else if (JFileChooser.APPROVE_SELECTION.equals(cmd)) {
 					fcFrame.setVisible(false);
+					wasCanceled[0] = false;
 					synchronized(fc) {
 						fc.notifyAll();
 					}
@@ -687,6 +701,7 @@ public class Starburst extends JDesktopPane {
 				return null;
 			}
 		}
+		if(wasCanceled[0]) return null;
 		return(fc.getSelectedFile());
 	}
 
