@@ -11,6 +11,7 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.*;
 
+import javax.imageio.*;
 import javax.swing.*;
 
 import ar.com.hjg.pngj.*;
@@ -209,13 +210,38 @@ public class Starburst extends JDesktopPane {
 			s.asyncNewImage();
 		}});
 	}
+	
+	private static void callAppleMethod(String mName, Object... args) {
+		try {
+			Class<?> aom = Class.forName("net.clonecomputers.lab.starburst.AppleOnlyMethods");
+			Class<?>[] argTypes = new Class<?>[args.length];
+			for(int i = 0; i < args.length; i++) {
+				argTypes[i] = args[i].getClass();
+			}
+			Method m = aom.getMethod(mName, argTypes);
+			m.invoke(null, args);
+		} catch (ClassNotFoundException e) {
+			throw new RuntimeException(e);
+		} catch (NoSuchMethodException e) {
+			throw new RuntimeException(e);
+		} catch (SecurityException e) {
+			throw new RuntimeException(e);
+		} catch (IllegalAccessException e) {
+			throw new RuntimeException(e);
+		} catch (IllegalArgumentException e) {
+			throw new RuntimeException(e);
+		} catch (InvocationTargetException e) {
+			throw new RuntimeException(e);
+		}
+	}
 
 	public static void toFullScreen(JFrame window, GraphicsDevice gd){
 		if(System.getProperty("os.name").contains("OS X")) {
 			if(Integer.parseInt(System.getProperty("os.version").split("[.]")[1]) >= 7 && // lion and above
 			   Integer.parseInt(System.getProperty("java.specification.version").split("[.]")[1]) >= 7){ // java 7 and above
 				System.out.println("trying to apple fullscreen");
-				try {
+				callAppleMethod("appleFullscreen", window);
+				/*try {
 					Class<?> aom = Class.forName("net.clonecomputers.lab.starburst.AppleOnlyMethods");
 					Method afs = aom.getMethod("appleFullscreen", JFrame.class);
 					afs.invoke(null,window);
@@ -229,7 +255,7 @@ public class Starburst extends JDesktopPane {
 					e.printStackTrace();
 				} catch (InvocationTargetException e) {
 					e.printStackTrace();
-				}
+				}*/
 			} else { // Snow Leopard and below OR apple java 6 and below TODO: test this on SL
 				if(Integer.parseInt(System.getProperty("java.version").split("[.]")[1]) >= 7){
 					try{
@@ -278,7 +304,7 @@ public class Starburst extends JDesktopPane {
 		//pixels = new int[w*h];
 		canvas = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
 		this.setPreferredSize(new Dimension(w,h));
-		opperations = Collections.synchronizedList(new ArrayList<Pair>());
+		opperations = new ArrayList<Pair>();//Collections.synchronizedList(new ArrayList<Pair>());
 		//background(randnum(256), randnum(256), randnum(256));
 		//background(0);
 		current = new boolean[canvas.getWidth()][canvas.getHeight()];
@@ -367,6 +393,31 @@ public class Starburst extends JDesktopPane {
 	}
 
 	private void save(File f) {
+		String[] tmp = f.getName().split("[.]");
+		String extension = tmp[tmp.length-1];
+		if(!extension.equalsIgnoreCase("png")) {
+			boolean writableExtension = false;
+			for(String ext: ImageIO.getWriterFileSuffixes()) { // can ImageIO deal with it?
+				if(extension.equalsIgnoreCase(ext)) {
+					writableExtension = true;
+					break;
+				}
+			}
+			if(writableExtension) {
+				//trying to write non-png
+				//will not include metadata
+				System.out.println(Arrays.toString(ImageIO.getWriterFormatNames()));
+				try {
+					ImageIO.write(canvas, extension.toLowerCase(), f);
+					return;
+				} catch (IOException e) {
+					e.printStackTrace();
+					f = new File(f.toString().concat(".png"));
+				}
+			} else {
+				f = new File(f.toString().concat(".png"));
+			}
+		}
 		ImageInfo info = new ImageInfo(canvas.getWidth(), canvas.getHeight(),
 				8, canvas.getColorModel().hasAlpha()); // I _think_ the bit-depth is 24
 		PngWriter writer = new PngWriter(f, info);
@@ -471,7 +522,7 @@ public class Starburst extends JDesktopPane {
 		if(RBIAS < 0) randomizeRBias();
 		if(GBIAS < 0) randomizeGBias();
 		if(BBIAS < 0) randomizeBBias();
-		if(CENTERBIAS < 0) randomizeCenterBias();
+		//if(CENTERBIAS < 0) randomizeCenterBias();
 		if(RANDOMFACTOR < 0) randomizeRandomfactor();
 
 		if(SEED_METHOD < 0) randomizeSeedMethod();
@@ -677,7 +728,7 @@ public class Starburst extends JDesktopPane {
 				return null;
 			}
 		}
-		return(fc.getSelectedFile());
+		return fc.getSelectedFile();
 	}
 
 	private void mousePressed() {
@@ -694,13 +745,24 @@ public class Starburst extends JDesktopPane {
 				System.out.println("No output file was selected...");
 			} 
 			else {
-				//if (!savePath.endsWith(".png")) savePath+=".png";
 				// If a file was selected, save image to path
 				System.out.println("saving to "+output.getAbsolutePath());
 				save(output);
 				System.out.println("saved");
+				Starburst.this.requestFocusInWindow();
+				Starburst.this.requestFocus();
+				if(appleFullscreenAvailable()) {
+					callAppleMethod("appleForeground");
+				}
 			}
 		}});
+	}
+
+	protected static boolean appleFullscreenAvailable() {
+		return System.getProperty("os.name").contains("OS X")
+			//&&Integer.parseInt(System.getProperty("os.version").split("[.]")[1]) >= 7 // lion and above
+			//&&Integer.parseInt(System.getProperty("java.specification.version").split("[.]")[1]) >= 7 // java 7 and above
+				;
 	}
 
 	private int randomColor() {
@@ -842,7 +904,11 @@ public class Starburst extends JDesktopPane {
 		}
 	}
 
-	private synchronized Pair getNextObject() {
+	private synchronized void addPoint(int x, int y) {
+		opperations.add(new Pair(x,y));
+	}
+	
+	private synchronized Pair getPoint() {
 		if (!opperations.isEmpty()) {
 			int index = 0;
 			if(REMOVE_ORDER==0) {
@@ -861,22 +927,22 @@ public class Starburst extends JDesktopPane {
 
 	private void fillAllPixels() {
 		while (!opperations.isEmpty()) {
-			Pair myPair=getNextObject();
+			Pair myPair=getPoint();
 			if (myPair==null) continue;
 			int x=myPair.x, y=myPair.y;
 			if (current[x][y]) continue;
 			fillPixel(x, y);
 			if (((y+1)<canvas.getHeight())&&!current[x][y+1]) {
-				if (RANDOMFACTOR<=0||myRandom.nextDouble()*(RANDOMFACTOR+1)>1) opperations.add(new Pair(x, y+1));
+				if (RANDOMFACTOR<=0||myRandom.nextDouble()*(RANDOMFACTOR+1)>1) addPoint(x,y+1);
 			}
 			if (((x+1)<canvas.getWidth())&&!current[x+1][y]) {
-				if (RANDOMFACTOR<=0||myRandom.nextDouble()*(RANDOMFACTOR+1)>1) opperations.add(new Pair(x+1, y));
+				if (RANDOMFACTOR<=0||myRandom.nextDouble()*(RANDOMFACTOR+1)>1) addPoint(x+1, y);
 			}
 			if (((y-1)>=0)&&!current[x][y-1]) {
-				if (RANDOMFACTOR<=0||myRandom.nextDouble()*(RANDOMFACTOR+1)>1) opperations.add(new Pair(x, y-1));
+				if (RANDOMFACTOR<=0||myRandom.nextDouble()*(RANDOMFACTOR+1)>1) addPoint(x, y-1);
 			}
 			if (((x-1)>=0)&&!current[x-1][y]) {
-				if (RANDOMFACTOR<=0||myRandom.nextDouble()*(RANDOMFACTOR+1)>1) opperations.add(new Pair(x-1, y));
+				if (RANDOMFACTOR<=0||myRandom.nextDouble()*(RANDOMFACTOR+1)>1) addPoint(x-1, y);
 			}
 		}
 		doneCount++;
@@ -897,7 +963,7 @@ public class Starburst extends JDesktopPane {
 					} catch (InterruptedException e) {
 						throw new RuntimeException(e);
 					}
-					updatePixels(); //INFO: updatePixels() for show
+					updatePixels(); //I/NFO: updatePixels() for show
 				}
 			}
 		});*/
@@ -967,22 +1033,22 @@ public class Starburst extends JDesktopPane {
 		case 3:
 			boolean[][] localcurrent = new boolean[canvas.getWidth()][canvas.getHeight()];
 			opperations.add(centerPair);
-			while (!opperations.isEmpty()) {
-				Pair myPair=getNextObject();
+			Pair myPair;
+			while ((myPair = getPoint()) != null) {
 				int x=myPair.x, y=myPair.y;
 				if (localcurrent[x][y]) continue;
 				if (!current[x][y]) fillPixel(x, y);
 				if (((y+1)<canvas.getHeight())&&!localcurrent[x][y+1]) {
-					opperations.add(new Pair(x, y+1));
+					addPoint(x, y+1);
 				}
 				if (((x+1)<canvas.getWidth())&&!localcurrent[x+1][y]) {
-					opperations.add(new Pair(x+1, y));
+					addPoint(x+1, y);
 				}
 				if (((y-1)>=0)&&!localcurrent[x][y-1]) {
-					opperations.add(new Pair(x, y-1));
+					addPoint(x, y-1);
 				}
 				if (((x-1)>=0)&&!localcurrent[x-1][y]) {
-					opperations.add(new Pair(x-1, y));
+					addPoint(x-1, y);
 				}
 				localcurrent[x][y]=true;
 			}
