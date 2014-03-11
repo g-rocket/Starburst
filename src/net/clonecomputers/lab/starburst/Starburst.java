@@ -368,7 +368,7 @@ public class Starburst extends JDesktopPane {
 
 	private void save(File f) {
 		ImageInfo info = new ImageInfo(canvas.getWidth(), canvas.getHeight(),
-				8, canvas.getColorModel().hasAlpha()); // I _think_ the bit-depth is 24
+				8, canvas.getColorModel().hasAlpha()); // I _think_ the bit-depth is 8
 		PngWriter writer = new PngWriter(f, info);
 
 		loadPixels();
@@ -588,10 +588,18 @@ public class Starburst extends JDesktopPane {
 	}
 
 	private void keyPressed(char key) {
-		if(key=='v'||key=='V') mousePressed();
-		else if (key=='p'||key=='P') setParams();
-		else if (key=='s'||key=='S') setOtherParams();
-		else if (key=='c'||key=='C') {
+		key = String.valueOf(key).toLowerCase().charAt(0);
+		switch(key) {
+		case 'v':
+			mousePressed();
+			break;
+		case 'p':
+			setParams();
+			break;
+		case 's':
+			setOtherParams();
+			break;
+		case 'c':
 			exec.execute(new Runnable(){public void run(){
 				//System.out.print("copying variables from ");
 				File input = chooseFile(JFileChooser.OPEN_DIALOG, JFileChooser.FILES_ONLY);
@@ -604,10 +612,11 @@ public class Starburst extends JDesktopPane {
 				//System.out.println("done");
 				newImage();
 			}});
-		}
-		else if (key=='q'||key=='Q') {
+			break;
+		case 'q':
 			System.exit(0);
-		} else if (key=='m'||key=='M') {
+			break;
+		case 'm':
 			exec.execute(new Runnable(){@Override public void run(){
 				String input = javax.swing.JOptionPane.showInternalInputDialog(Starburst.this,
 						"How many images do you want to generate?");
@@ -623,8 +632,9 @@ public class Starburst extends JDesktopPane {
 				System.out.printf("about to generate %d images\n",Integer.parseInt(input));
 				genMany(outputDirectory.getAbsolutePath(), Integer.parseInt(input));
 			}});
-		} else if (key != 27) {
-			asyncNewImage();
+			break;
+		default:
+			if(key != 27) asyncNewImage();
 		}
 	}
 	
