@@ -45,7 +45,7 @@ public class Starburst extends JDesktopPane {
 	//3 -> center point
 
 	//boolean RANDOMFACTOR<0 = true;
-	
+
 	private int REMOVE_ORDER = 0;
 	//-1 > random
 	//0 -> random
@@ -94,204 +94,140 @@ public class Starburst extends JDesktopPane {
 	private int THREADNUM = 5;
 
 	private static final String PARAM_CHANGE_MESSAGE = 
-			"Please input the image generation paramaters in the form" + "\n"
-					+ "(red bias, green bias, blue bias, center bias, grey factor, random layout factor)" + "\n"
-					+ "or 'random' for random values or 'same' for current values, or cancel to exit unchanged";
+			"Please input the image generation paramaters in the form" + "\n" +
+			"(red bias, green bias, blue bias, center bias, grey factor, random layout factor)" + "\n" +
+			"or 'random' for random values or 'same' for current values, or cancel to exit unchanged";
 	private static final String OTHER_PARAM_CHANGE_MESSAGE = 
-			"Please input the seeding and finalizations paramaters in the form" + "\n"
-					+ "(seed method, finalization method)" + "\n"
-					+ "or 'random' for random values or 'same' for current values, or cancel to exit unchanged" + "\n"
-					+ "# |  Seed Method  | Remove order | Out of Range  | Finalization" + "\n"
-					+ "---------------------------------------------------------------" + "\n"
-					+ "0 |   13 points   |    random    |    average    | squares then loop x,y" + "\n"
-					+ "1 |  black lines  |    first     | pick one side | loop x,y" + "\n"
-					+ "2 | colored lines |              |               | fill with black" + "\n"
-					+ "3 | center point  |              |               | run normally from center point" + "\n";
+			"Please input the seeding and finalizations paramaters in the form" + "\n" +
+			"(seed method, finalization method)" + "\n" +
+			"or 'random' for random values or 'same' for current values, or cancel to exit unchanged" + "\n" +
+			"# |  Seed Method  | Remove order | Out of Range  | Finalization" + "\n" +
+			"---------------------------------------------------------------" + "\n" +
+			"0 |   13 points   |    random    |    average    | squares then loop x,y" + "\n" +
+			"1 |  black lines  |    first     | pick one side | loop x,y" + "\n" +
+			"2 | colored lines |              |               | fill with black" + "\n" +
+			"3 | center point  |              |               | run normally from center point" + "\n";
 	private int pixnum=0;
 	private boolean current[][];
 	private List<Pair> opperations;
 	public static final ExecutorService exec = Executors.newCachedThreadPool();
-			//Executors.newFixedThreadPool(THREADNUM+1); // +1 for system.in listener
+	//Executors.newFixedThreadPool(THREADNUM+1); // +1 for system.in listener
 	private Pair centerPair;
 	private int[] pixels;
 
 	public static void main(final String[] args) {
 		SwingUtilities.invokeLater(new Runnable(){@Override public void run(){
-			GraphicsDevice[] gda = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
-			GraphicsDevice gd = null;
+			GraphicsDevice[] screens = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
+			GraphicsDevice biggestScreen = null;
 			int maxPixelsSoFar = 0;
-			for(GraphicsDevice g: gda){ // find biggest screen
-				DisplayMode d = g.getDisplayMode();
+			for(GraphicsDevice screen: screens){ // find biggest screen
+				DisplayMode d = screen.getDisplayMode();
 				if(d.getWidth() * d.getHeight() > maxPixelsSoFar){
-					gd = g;
+					biggestScreen = screen;
 					maxPixelsSoFar = d.getWidth() * d.getHeight();
 				}
 			}
-			DisplayMode d = gd.getDisplayMode();
+			DisplayMode d = biggestScreen.getDisplayMode();
 			JFrame window = new JFrame();
 			//window.setBackground(Color.WHITE);
 			//window.setForeground(Color.WHITE);
 			Dimension size;
-			if(args.length == 0) {
+			switch(args.length) {
+			case 0:
 				size = new Dimension(d.getWidth(), d.getHeight());
-			} else if(args.length == 1) {
+			break;
+			case 1:
 				size = new Dimension(
-					Integer.parseInt(args[0].split(",")[0].trim()),
-					Integer.parseInt(args[0].split(",")[1].trim()));
-			} else if(args.length == 2) {
+						Integer.parseInt(args[0].split(",")[0].trim()),
+						Integer.parseInt(args[0].split(",")[1].trim()));
+			break;
+			case 2:
 				size = new Dimension(
 						Integer.parseInt(args[0].trim()),
 						Integer.parseInt(args[1].trim()));
-			} else try { // args.length > 2 means read from stdin
+			break;
+			default: // args.length > 2 means read from stdin
 				System.out.println("Input dimensions");
 				BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-				String arg0 = reader.readLine().trim();
-				if(arg0.matches("\\d+\\s*,\\s*\\d+")){
+				String arg0;
+				try {
+					arg0 = reader.readLine().trim();
+				} catch (IOException e) {
+					throw new RuntimeException(e);
+				}
+				if(arg0.matches("\\d+\\s*,\\s*\\d+")){ // WWW, HHH
 					size = new Dimension(
 							Integer.parseInt(arg0.split(",")[0].trim()),
 							Integer.parseInt(arg0.split(",")[1].trim()));
-				} else if(arg0.matches("\\d+")) {
-					String arg1 = reader.readLine().trim();
+				} else if(arg0.matches("\\d+")) { // WWW \n HHH
+					String arg1;
+					try {
+						arg1 = reader.readLine().trim();
+					} catch (IOException e) {
+						throw new RuntimeException(e);
+					}
 					size = new Dimension(
 							Integer.parseInt(arg0.trim()),
 							Integer.parseInt(arg1.trim()));
 				} else {
 					throw new IllegalArgumentException("Invalid dimensions");
 				}
-			} catch(IOException e) {
-				throw new RuntimeException(e);
 			}
-			final Starburst s = new Starburst(size);
-			Starburst.exec.execute(new Runnable() {
-				@Override public void run() {
-					BufferedReader r = new BufferedReader(new InputStreamReader(System.in));
-					while(true) {
-						try {
-							String arg = r.readLine().trim();
-							for(char c: arg.toCharArray()) {
-								s.keyPressed(c);
-							}
-						} catch (IOException e) {
-							throw new RuntimeException(e);
-						}
-					}
-				}
-			});
-			window.addMouseListener(new MouseAdapter(){
-				@Override public void mouseClicked(MouseEvent e){
-					s.mousePressed();
-				}
-			});
-			s.addMouseListener(new MouseAdapter(){
-				@Override public void mouseClicked(MouseEvent e){
-					s.mousePressed();
-				}
-			});
-			window.addKeyListener(new KeyAdapter(){
-				/*@Override public void keyReleased(KeyEvent e){
-					if(e.getKeyCode() == KeyEvent.VK_ENTER) s.mousePressed();
-					//if(e.getKeyCode() == KeyEvent.VK_ESCAPE) System.exit(0);
-				}*/
-				@Override public void keyTyped(KeyEvent e){
-					s.keyPressed(e.getKeyChar());
-				}
-			});
-			s.addKeyListener(new KeyAdapter(){
-				/*@Override public void keyReleased(KeyEvent e){
-					if(e.getKeyCode() == KeyEvent.VK_ENTER) s.mousePressed();
-					//if(e.getKeyCode() == KeyEvent.VK_ESCAPE) System.exit(0);
-				}*/
-				@Override public void keyTyped(KeyEvent e){
-					s.keyPressed(e.getKeyChar());
-				}
-			});
+			Starburst s = new Starburst(size);
+			s.setupKeyAndClickListeners(window);
 			window.setContentPane(s);
-			toFullScreen(window,gd);
+			VersionDependentMethodUtilities.toFullScreen(window,biggestScreen);
 			s.asyncNewImage();
 		}});
 	}
-	
-	private static void callAppleMethod(String mName, Object... args) {
-		try {
-			Class<?> aom = Class.forName("net.clonecomputers.lab.starburst.AppleOnlyMethods");
-			Class<?>[] argTypes = new Class<?>[args.length];
-			for(int i = 0; i < args.length; i++) {
-				argTypes[i] = args[i].getClass();
-			}
-			Method m = aom.getMethod(mName, argTypes);
-			m.invoke(null, args);
-		} catch (ClassNotFoundException e) {
-			throw new RuntimeException(e);
-		} catch (NoSuchMethodException e) {
-			throw new RuntimeException(e);
-		} catch (SecurityException e) {
-			throw new RuntimeException(e);
-		} catch (IllegalAccessException e) {
-			throw new RuntimeException(e);
-		} catch (IllegalArgumentException e) {
-			throw new RuntimeException(e);
-		} catch (InvocationTargetException e) {
-			throw new RuntimeException(e);
-		}
-	}
 
-	public static void toFullScreen(JFrame window, GraphicsDevice gd){
-		if(System.getProperty("os.name").contains("OS X")) {
-			if(Integer.parseInt(System.getProperty("os.version").split("[.]")[1]) >= 7 && // lion and above
-			   Integer.parseInt(System.getProperty("java.specification.version").split("[.]")[1]) >= 7){ // java 7 and above
-				System.out.println("trying to apple fullscreen");
-				callAppleMethod("appleFullscreen", window);
-				/*try {
-					Class<?> aom = Class.forName("net.clonecomputers.lab.starburst.AppleOnlyMethods");
-					Method afs = aom.getMethod("appleFullscreen", JFrame.class);
-					afs.invoke(null,window);
-				} catch(NoSuchMethodException e) {
-					e.printStackTrace();
-				} catch (ClassNotFoundException e) {
-					e.printStackTrace();
-				} catch (IllegalArgumentException e) {
-					e.printStackTrace();
-				} catch (IllegalAccessException e) {
-					e.printStackTrace();
-				} catch (InvocationTargetException e) {
-					e.printStackTrace();
-				}*/
-			} else { // Snow Leopard and below OR apple java 6 and below TODO: test this on SL
-				if(Integer.parseInt(System.getProperty("java.version").split("[.]")[1]) >= 7){
-					try{
-						Class<? extends JFrame> windowClass = window.getClass();
-						Method setAutoRequestFocusMethod = windowClass.getMethod("setAutoRequestFocus", boolean.class);
-						setAutoRequestFocusMethod.invoke(window, true);
-					} catch(InvocationTargetException e) {
-						// will never happen
-					} catch(NoSuchMethodException e) {
-						// can't find it, oh well.  cant call on <7 anyways
-					} catch(IllegalAccessException e) {
-						// will never happen
+	public void setupKeyAndClickListeners(JFrame window) {
+		// consume System.in and redirect it to key listener
+		// just in case the focus system breaks (as it so often does)
+		// and you _really_need_ to save that awesome image
+		exec.execute(new Runnable() {
+			@Override public void run() {
+				BufferedReader r = new BufferedReader(new InputStreamReader(System.in));
+				while(true) {
+					try {
+						String arg = r.readLine().trim();
+						for(char c: arg.toCharArray()) {
+							Starburst.this.keyPressed(c);
+						}
+					} catch (IOException e) {
+						throw new RuntimeException(e);
 					}
 				}
-				window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-				window.setUndecorated(true);
-				//window.setExtendedState(JFrame.MAXIMIZED_BOTH);
-				gd.setFullScreenWindow(window);
-				//window.setVisible(false);
-				window.toFront();
-				//window.setAlwaysOnTop(true);
-				//window.toFront();
-				Rectangle r = gd.getDefaultConfiguration().getBounds();
-				window.setBounds(r);
-				//window.toFront();
-				//window.setAlwaysOnTop(true);
-				//window.pack();
 			}
-		} else { // Windows and Linux TODO: test this
-			window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-			window.setUndecorated(true);
-			window.setExtendedState(JFrame.MAXIMIZED_BOTH);
-			window.toFront();
-		}
-		window.pack();
-		window.setVisible(true);
+		});
+		window.addMouseListener(new MouseAdapter(){
+			@Override public void mouseClicked(MouseEvent e){
+				Starburst.this.mousePressed();
+			}
+		});
+		this.addMouseListener(new MouseAdapter(){
+			@Override public void mouseClicked(MouseEvent e){
+				Starburst.this.mousePressed();
+			}
+		});
+		window.addKeyListener(new KeyAdapter(){
+			/*@Override public void keyReleased(KeyEvent e){
+				if(e.getKeyCode() == KeyEvent.VK_ENTER) mousePressed();
+				//if(e.getKeyCode() == KeyEvent.VK_ESCAPE) System.exit(0);
+			}*/
+			@Override public void keyTyped(KeyEvent e){
+				Starburst.this.keyPressed(e.getKeyChar());
+			}
+		});
+		this.addKeyListener(new KeyAdapter(){
+			/*@Override public void keyReleased(KeyEvent e){
+				if(e.getKeyCode() == KeyEvent.VK_ENTER) mousePressed();
+				//if(e.getKeyCode() == KeyEvent.VK_ESCAPE) System.exit(0);
+			}*/
+			@Override public void keyTyped(KeyEvent e){
+				Starburst.this.keyPressed(e.getKeyChar());
+			}
+		});
 	}
 
 	public Starburst(int w,int h){
@@ -361,35 +297,35 @@ public class Starburst extends JDesktopPane {
 		}
 		return str.toString();
 	}
-	
+
 	private void copyParamsFromFile(File file) {
 		PngReader pngr = new PngReader(file);
-		  pngr.readSkippingAllRows(); // reads only metadata
-		  boolean foundParams = false;
-		  for (PngChunk c : pngr.getChunksList().getChunks()) {
-		      if (!ChunkHelper.isText(c)) continue;
-		      PngChunkTextVar ct = (PngChunkTextVar) c;
-		      String key = ct.getKey();
-		      String val = ct.getVal();
-		      if(key.equalsIgnoreCase("Parameters")) {
-		    	  foundParams = true;
-		    	  System.out.printf("stored params: %s\n",val);
-		    	  String[] params = val.split("[,]");
-		    	  int i = 0;
-		    	  if(i < params.length) RBIAS = Double.parseDouble(params[i++].trim());
-		    	  if(i < params.length) GBIAS = Double.parseDouble(params[1].trim());
-		    	  if(i < params.length) BBIAS = Double.parseDouble(params[2].trim());
-		    	  if(i < params.length) CENTERBIAS = Double.parseDouble(params[3].trim())+1;
-		    	  if(i < params.length) GREYFACTOR = Integer.parseInt(params[4].trim());
-		    	  if(i < params.length) RANDOMFACTOR = Double.parseDouble(params[5].trim());
-		    	  if(i < params.length) SEED_METHOD = Integer.parseInt(params[6].trim());
-		    	  if(i < params.length) FINALIZATION_METHOD = Integer.parseInt(params[7].trim());
-		    	  RANDOMPROPERTIES = false;
-		    	  RANDOM_OTHER_PROPS = false;
-		      }
-		  }
-		  pngr.end(); // not necessary here, but good practice
-		  if(!foundParams) System.err.println("failed to find params");
+		pngr.readSkippingAllRows(); // reads only metadata
+		boolean foundParams = false;
+		for (PngChunk c : pngr.getChunksList().getChunks()) {
+			if (!ChunkHelper.isText(c)) continue;
+			PngChunkTextVar ct = (PngChunkTextVar) c;
+			String key = ct.getKey();
+			String val = ct.getVal();
+			if(key.equalsIgnoreCase("Parameters")) {
+				foundParams = true;
+				System.out.printf("stored params: %s\n",val);
+				String[] params = val.split("[,]");
+				int i = 0;
+				if(i < params.length) RBIAS = Double.parseDouble(params[i++].trim());
+				if(i < params.length) GBIAS = Double.parseDouble(params[1].trim());
+				if(i < params.length) BBIAS = Double.parseDouble(params[2].trim());
+				if(i < params.length) CENTERBIAS = Double.parseDouble(params[3].trim())+1;
+				if(i < params.length) GREYFACTOR = Integer.parseInt(params[4].trim());
+				if(i < params.length) RANDOMFACTOR = Double.parseDouble(params[5].trim());
+				if(i < params.length) SEED_METHOD = Integer.parseInt(params[6].trim());
+				if(i < params.length) FINALIZATION_METHOD = Integer.parseInt(params[7].trim());
+				RANDOMPROPERTIES = false;
+				RANDOM_OTHER_PROPS = false;
+			}
+		}
+		pngr.end(); // not necessary here, but good practice
+		if(!foundParams) System.err.println("failed to find params");
 	}
 
 	private void save(File f) {
@@ -434,13 +370,13 @@ public class Starburst extends JDesktopPane {
 		for(int row = 0; row < canvas.getHeight(); row++) {
 			writer.writeRowInt(Arrays.copyOfRange(pixels, row*canvas.getWidth()*3, (row+1)*canvas.getWidth()*3));
 		}
-		
+
 		PngMetadata meta = writer.getMetadata();
 		meta.setTimeNow();
 		meta.setText("Parameters",String.format("%.2f, %.2f, %.2f, %.2f, %d, %.2f, %d, %d, %d, %b",
 				RBIAS, GBIAS, BBIAS, CENTERBIAS-1, GREYFACTOR,
 				RANDOMFACTOR, SEED_METHOD, FINALIZATION_METHOD, REMOVE_ORDER, SHARP));
-		
+
 		writer.end();
 		/*ImageWriter i;
 		Iterator<ImageWriter> writers = ImageIO.getImageWritersBySuffix(suffix);
@@ -463,7 +399,7 @@ public class Starburst extends JDesktopPane {
 			throw new RuntimeException(e);
 		}*/
 	}
-	
+
 	private void randomizeProperties() {
 		randomizeRBias();
 		randomizeGBias();
@@ -478,13 +414,13 @@ public class Starburst extends JDesktopPane {
 		randomizeRemoveOrder();
 		randomizeSharp();
 	}
-	
+
 	private void randomizeRBias() { RBIAS = randoml(randomr(-.5, .5), randomr(-.5, .5), randomr(-1.5, 1.5)); }
 	private void randomizeGBias() { GBIAS = randoml(randomr(-.5, .5), randomr(-.5, .5), randomr(-1.5, 1.5)); }
 	private void randomizeBBias() { BBIAS = randoml(randomr(-.5, .5), randomr(-.5, .5), randomr(-1.5, 1.5)); }
 	private void randomizeCenterBias() { CENTERBIAS = randoml(randomr(0, 15), randomr(10, 15), 0)+1; }
 	private void randomizeRandomfactor() { RANDOMFACTOR = randoml(randomr(0, 1), randomr(0, 1), randomr(1, 2), randomr(0, 3), 20, 100); }
-	
+
 	private void randomizeSeedMethod() { SEED_METHOD = randoml(0, 1, 2, 3); }
 	private void randomizeFinalization() { FINALIZATION_METHOD = randoml(0, 1, 2, 3); }
 	private void randomizeRemoveOrder() { REMOVE_ORDER = randoml(0,0,0,1); }
@@ -493,7 +429,7 @@ public class Starburst extends JDesktopPane {
 	private double randomr(double min, double max) {
 		return (myRandom.nextDouble() * (max-min)) + min;
 	}
-	
+
 	private int randoml(int... list) {
 		return list[myRandom.nextInt(list.length)];
 	}
@@ -501,7 +437,7 @@ public class Starburst extends JDesktopPane {
 	private double randoml(double... list) {
 		return list[myRandom.nextInt(list.length)];
 	}
-	
+
 	public void asyncNewImage() {
 		exec.execute(new Runnable() {
 			@Override public void run() {
@@ -518,7 +454,7 @@ public class Starburst extends JDesktopPane {
 				GREYFACTOR, RANDOMFACTOR, SEED_METHOD, FINALIZATION_METHOD, REMOVE_ORDER, SHARP));
 		if (RANDOMPROPERTIES) randomizeProperties();
 		if (RANDOM_OTHER_PROPS) randomizeOtherProperties();
-		
+
 		if(RBIAS < 0) randomizeRBias();
 		if(GBIAS < 0) randomizeGBias();
 		if(BBIAS < 0) randomizeBBias();
@@ -528,7 +464,7 @@ public class Starburst extends JDesktopPane {
 		if(SEED_METHOD < 0) randomizeSeedMethod();
 		if(FINALIZATION_METHOD < 0) randomizeFinalization();
 		if(REMOVE_ORDER < 0) randomizeRemoveOrder();
-		
+
 		pixels = new int[canvas.getWidth()*canvas.getHeight()*canvas.getColorModel().getNumComponents()];
 		savePixels();
 		//loadPixels();
@@ -567,8 +503,6 @@ public class Starburst extends JDesktopPane {
 		super.paintComponent(g);
 		g.drawImage(canvas, 0, 0, this);
 	}
-	
-	
 
 	private void setOtherParams() {
 		String curprops = String.format("%d, %d, %d, %d", 
@@ -643,16 +577,16 @@ public class Starburst extends JDesktopPane {
 		switch(key) {
 		case 'v':
 			mousePressed();
-			break;
+		break;
 		case 'p':
 			setParams();
-			break;
+		break;
 		case 's':
 			setOtherParams();
-			break;
+		break;
 		case 'o':
 			generateFromImage();
-			break;
+		break;
 		case 'c':
 			exec.execute(new Runnable(){public void run(){
 				//System.out.print("copying variables from ");
@@ -666,10 +600,10 @@ public class Starburst extends JDesktopPane {
 				//System.out.println("done");
 				newImage();
 			}});
-			break;
+		break;
 		case 'q':
 			System.exit(0);
-			break;
+		break;
 		case 'm':
 			exec.execute(new Runnable(){@Override public void run(){
 				String input = javax.swing.JOptionPane.showInternalInputDialog(Starburst.this,
@@ -686,18 +620,17 @@ public class Starburst extends JDesktopPane {
 				System.out.printf("about to generate %d images\n",Integer.parseInt(input));
 				genMany(outputDirectory.getAbsolutePath(), Integer.parseInt(input));
 			}});
-			break;
+		break;
 		default:
 			if(key != 27) asyncNewImage();
 		}
 	}
-	
+
 	private void generateFromImage() {
 		File f = chooseFile(JFileChooser.OPEN_DIALOG, JFileChooser.FILES_ONLY);
 		PngReaderInt r = new PngReaderInt(f);
 		int[] imagePixels = new int[r.imgInfo.samplesPerRow];
 		//r.r
-		
 	}
 
 	private static boolean isNamedAfterAncestor(File f) {
@@ -774,25 +707,19 @@ public class Starburst extends JDesktopPane {
 				System.out.println("saving to "+output.getAbsolutePath());
 				save(output);
 				System.out.println("saved");
+				// Now let's try to fix focus problems
 				Starburst.this.requestFocusInWindow();
 				Starburst.this.requestFocus();
-				if(appleFullscreenAvailable()) {
-					callAppleMethod("appleForeground");
+				if(VersionDependentMethodUtilities.appleEawtAvailable()) {
+					VersionDependentMethodUtilities.appleForeground();
 				}
 			}
 		}});
 	}
 
-	protected static boolean appleFullscreenAvailable() {
-		return System.getProperty("os.name").contains("OS X")
-			//&&Integer.parseInt(System.getProperty("os.version").split("[.]")[1]) >= 7 // lion and above
-			//&&Integer.parseInt(System.getProperty("java.specification.version").split("[.]")[1]) >= 7 // java 7 and above
-				;
-	}
-
 	private int randomColor() {
 		return myRandom.nextInt(0xffffff+1);
-			//new Color(myRandom.nextFloat(),myRandom.nextFloat(),myRandom.nextFloat()).getRGB();
+		//new Color(myRandom.nextFloat(),myRandom.nextFloat(),myRandom.nextFloat()).getRGB();
 	}
 
 	private void seedImage(int how) {
@@ -932,13 +859,13 @@ public class Starburst extends JDesktopPane {
 	private synchronized void addPoint(int x, int y) {
 		opperations.add(new Pair(x,y));
 	}
-	
+
 	private synchronized Pair getPoint() {
 		if (!opperations.isEmpty()) {
 			int index = 0;
 			if(REMOVE_ORDER==0) {
 				index = myRandom.nextInt(opperations.size());
-						//RANDOMFACTOR<0? myRandom.nextInt(opperations.size()): 0;
+				//RANDOMFACTOR<0? myRandom.nextInt(opperations.size()): 0;
 			}
 			return opperations.remove(index);
 		}
@@ -1183,7 +1110,7 @@ public class Starburst extends JDesktopPane {
 		}
 		return (int) n;
 		//return (int) (randnum((double)(maxVal-minVal+biasFactor+1))+minVal);
-		*/
+		 */
 	}
 
 }
