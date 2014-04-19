@@ -109,7 +109,7 @@ public class Starburst extends JDesktopPane {
 			"3 | center point  |              |               | run normally from center point" + "\n";
 	private int pixnum=0;
 	private boolean current[][];
-	private List<Pair> opperations;
+	private List<Pair> operations;
 	public static final ExecutorService exec = Executors.newCachedThreadPool();
 	//Executors.newFixedThreadPool(THREADNUM+1); // +1 for system.in listener
 	private Pair centerPair;
@@ -240,7 +240,7 @@ public class Starburst extends JDesktopPane {
 		//pixels = new int[w*h];
 		canvas = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
 		this.setPreferredSize(new Dimension(w,h));
-		opperations = new ArrayList<Pair>();//Collections.synchronizedList(new ArrayList<Pair>());
+		operations = new ArrayList<Pair>();//Collections.synchronizedList(new ArrayList<Pair>());
 		//background(randnum(256), randnum(256), randnum(256));
 		//background(0);
 		current = new boolean[canvas.getWidth()][canvas.getHeight()];
@@ -724,12 +724,12 @@ public class Starburst extends JDesktopPane {
 
 	private void seedImage(int how) {
 		if (how == 0) {
-			//opperations.add(centerPair);
+			//addPoint(centerPair.x,centerPair.y)
 			for (int i = 0; i < 13; i++) {
-				Pair p = new Pair(myRandom.nextInt(canvas.getWidth()), myRandom.nextInt(canvas.getHeight()));
-				opperations.add(p);
-				current[p.x][p.y] = true;
-				setPixel(p.x, p.y, randomColor());
+				int x = myRandom.nextInt(canvas.getWidth()), y =  myRandom.nextInt(canvas.getHeight());
+				addPoint(x,y);
+				current[x][y] = true;
+				setPixel(x, y, randomColor());
 			}
 		} else if (how == 1 || how == 2) {
 			int c = (how == 1)? Color.BLACK.getRGB(): randomColor();
@@ -802,7 +802,7 @@ public class Starburst extends JDesktopPane {
 					}
 					if (how == 2) c = color((int)r,(int)g,(int)b);
 					//c = lerpColor(c,(int)randnum(#FFFFFF),.1);
-					//opperations.add(new Pair((int)x, (int)y));
+					//operations.add(new Pair((int)x, (int)y));
 					current[(int)x][(int)y] = true;
 					setPixel((int)x, (int)y, c);
 					if(how == 2) {
@@ -812,7 +812,7 @@ public class Starburst extends JDesktopPane {
 				}
 			}
 		} else if (how == 3) {
-			opperations.add(new Pair(canvas.getWidth()/2, canvas.getHeight()/2));
+			addPoint(canvas.getWidth()/2, canvas.getHeight()/2);
 		}
 		//updatePixels();//I/NFO: updatePixels() for show
 	}
@@ -821,10 +821,10 @@ public class Starburst extends JDesktopPane {
 		for (int x = 0; x < current.length; x++) {
 			for (int y = 0; y < current[0].length; y++) {
 				if (current[x][y]) {
-					if (x+1<current.length && !current[x+1][y]) opperations.add(new Pair(x+1, y));
-					if (x-1>=0 && !current[x-1][y]) opperations.add(new Pair(x-1, y));
-					if (y+1<current[0].length && !current[x][y+1]) opperations.add(new Pair(x, y+1));
-					if (y-1>=0 && !current[x][y-1]) opperations.add(new Pair(x, y-1));
+					if (x+1<current.length && !current[x+1][y]) addPoint(x+1, y);
+					if (x-1>=0 && !current[x-1][y]) addPoint(x-1, y);
+					if (y+1<current[0].length && !current[x][y+1]) addPoint(x, y+1);
+					if (y-1>=0 && !current[x][y-1]) addPoint(x, y-1);
 				}
 			}
 		}
@@ -855,30 +855,34 @@ public class Starburst extends JDesktopPane {
 			}
 		}
 	}
+	
+	private synchronized boolean hasPoint() {
+		return !operations.isEmpty();
+	}
 
 	private synchronized void addPoint(int x, int y) {
-		opperations.add(new Pair(x,y));
+		operations.add(new Pair(x,y));
 	}
 
 	private synchronized Pair getPoint() {
-		if (!opperations.isEmpty()) {
+		if (!operations.isEmpty()) {
 			int index = 0;
 			if(REMOVE_ORDER==0) {
-				index = myRandom.nextInt(opperations.size());
-				//RANDOMFACTOR<0? myRandom.nextInt(opperations.size()): 0;
+				index = myRandom.nextInt(operations.size());
+				//RANDOMFACTOR<0? myRandom.nextInt(operations.size()): 0;
 			}
-			return opperations.remove(index);
+			return operations.remove(index);
 		}
 		else {
 			return null;
 		}
 		//  Pair retval=null;
-		//  while (opperations.size()>0&&(retval=opperations.remove(0/*(int)(Math.random()*opperations.size())*/))==null);
+		//  while (operations.size()>0&&(retval=operations.remove(0/*(int)(Math.random()*operations.size())*/))==null);
 		//  return retval;
 	}
 
 	private void fillAllPixels() {
-		while (!opperations.isEmpty()) {
+		while (hasPoint()) {
 			Pair myPair=getPoint();
 			if (myPair==null) continue;
 			int x=myPair.x, y=myPair.y;
@@ -984,7 +988,7 @@ public class Starburst extends JDesktopPane {
 		break;
 		case 3:
 			boolean[][] localcurrent = new boolean[canvas.getWidth()][canvas.getHeight()];
-			opperations.add(centerPair);
+			addPoint(centerPair.x,centerPair.y);
 			Pair myPair;
 			while ((myPair = getPoint()) != null) {
 				int x=myPair.x, y=myPair.y;
