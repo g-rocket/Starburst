@@ -14,6 +14,9 @@
     <repository>
       <id>apache-commons</id>
       <url>https://repository.apache.org/content/groups/snapshots/org/apache/commons/</url>
+    </repository><repository>
+        <id>project-contained-repo</id>
+        <url>file://${basedir}/lib</url>
     </repository>
     <repository>
       <id>releases</id>
@@ -90,9 +93,7 @@
     <dependency>
       <groupId>com.apple</groupId>
       <artifactId>AppleJavaExtensions</artifactId>
-      <scope>system</scope>
-      <systemPath>${basedir}/lib/AppleJavaExtensions.jar</systemPath>
-      <version>2011-11-10</version>
+      <version>1.6</version>
     </dependency>
     <dependency>
       <groupId>ar.com.hjg</groupId>
