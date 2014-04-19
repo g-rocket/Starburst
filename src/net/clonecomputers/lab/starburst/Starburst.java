@@ -415,26 +415,26 @@ public class Starburst extends JDesktopPane {
 		randomizeSharp();
 	}
 
-	private void randomizeRBias() { RBIAS = randoml(randomr(-.5, .5), randomr(-.5, .5), randomr(-1.5, 1.5)); }
-	private void randomizeGBias() { GBIAS = randoml(randomr(-.5, .5), randomr(-.5, .5), randomr(-1.5, 1.5)); }
-	private void randomizeBBias() { BBIAS = randoml(randomr(-.5, .5), randomr(-.5, .5), randomr(-1.5, 1.5)); }
-	private void randomizeCenterBias() { CENTERBIAS = randoml(randomr(0, 15), randomr(10, 15), 0)+1; }
-	private void randomizeRandomfactor() { RANDOMFACTOR = randoml(randomr(0, 1), randomr(0, 1), randomr(1, 2), randomr(0, 3), 20, 100); }
+	private void randomizeRBias() { RBIAS = randomListDouble(randomRange(-.5, .5), randomRange(-.5, .5), randomRange(-1.5, 1.5)); }
+	private void randomizeGBias() { GBIAS = randomListDouble(randomRange(-.5, .5), randomRange(-.5, .5), randomRange(-1.5, 1.5)); }
+	private void randomizeBBias() { BBIAS = randomListDouble(randomRange(-.5, .5), randomRange(-.5, .5), randomRange(-1.5, 1.5)); }
+	private void randomizeCenterBias() { CENTERBIAS = randomListDouble(randomRange(0, 15), randomRange(10, 15), 0)+1; }
+	private void randomizeRandomfactor() { RANDOMFACTOR = randomListDouble(randomRange(0, 1), randomRange(0, 1), randomRange(1, 2), randomRange(0, 3), 20, 100); }
 
-	private void randomizeSeedMethod() { SEED_METHOD = randoml(0, 1, 2, 3); }
-	private void randomizeFinalization() { FINALIZATION_METHOD = randoml(0, 1, 2, 3); }
-	private void randomizeRemoveOrder() { REMOVE_ORDER = randoml(0,0,0,1); }
+	private void randomizeSeedMethod() { SEED_METHOD = randomListInt(0, 1, 2, 3); }
+	private void randomizeFinalization() { FINALIZATION_METHOD = randomListInt(0, 1, 2, 3); }
+	private void randomizeRemoveOrder() { REMOVE_ORDER = randomListInt(0,0,0,1); }
 	private void randomizeSharp() { SHARP = myRandom.nextBoolean(); }
 
-	private double randomr(double min, double max) {
+	private double randomRange(double min, double max) {
 		return (myRandom.nextDouble() * (max-min)) + min;
 	}
 
-	private int randoml(int... list) {
+	private int randomListInt(int... list) {
 		return list[myRandom.nextInt(list.length)];
 	}
 
-	private double randoml(double... list) {
+	private double randomListDouble(double... list) {
 		return list[myRandom.nextInt(list.length)];
 	}
 
@@ -1098,7 +1098,7 @@ public class Starburst extends JDesktopPane {
 		}
 
 		double a = myRandom.nextDouble();
-		a = .5+(randoml(-.5, .5)*pow(a, biastocenter));
+		a = .5+(randomListDouble(-.5, .5)*pow(a, biastocenter));
 		//System.out.println(a);
 		double val = (a*(double)(maxVal-minVal+biasFactor+1))+minVal;
 		return (int)val;
