@@ -46,7 +46,7 @@ public class Starburst extends JDesktopPane {
 
 	//boolean RANDOMFACTOR<0 = true;
 
-	private int REMOVE_ORDER = 0;
+	//private int REMOVE_ORDER = 0;
 	//-1 > random
 	//0 -> random
 	//1 -> first
@@ -240,7 +240,7 @@ public class Starburst extends JDesktopPane {
 		//pixels = new int[w*h];
 		canvas = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
 		this.setPreferredSize(new Dimension(w,h));
-		operations = new PixelOperationsList();
+		operations = new PixelOperationsList(w*h);
 		//background(randnum(256), randnum(256), randnum(256));
 		//background(0);
 		current = new boolean[canvas.getWidth()][canvas.getHeight()];
@@ -375,7 +375,7 @@ public class Starburst extends JDesktopPane {
 		meta.setTimeNow();
 		meta.setText("Parameters",String.format("%.2f, %.2f, %.2f, %.2f, %d, %.2f, %d, %d, %d, %b",
 				RBIAS, GBIAS, BBIAS, CENTERBIAS-1, GREYFACTOR,
-				RANDOMFACTOR, SEED_METHOD, FINALIZATION_METHOD, REMOVE_ORDER, SHARP));
+				RANDOMFACTOR, SEED_METHOD, FINALIZATION_METHOD, operations.getRemoveOrder().i(), SHARP));
 
 		writer.end();
 		/*ImageWriter i;
@@ -423,7 +423,7 @@ public class Starburst extends JDesktopPane {
 
 	private void randomizeSeedMethod() { SEED_METHOD = randomListInt(0, 1, 2, 3); }
 	private void randomizeFinalization() { FINALIZATION_METHOD = randomListInt(0, 1, 2, 3); }
-	private void randomizeRemoveOrder() { REMOVE_ORDER = randomListInt(0,0,0,1); }
+	private void randomizeRemoveOrder() { operations.setRemoveOrder(PixelOperationsList.RemoveOrder.get(randomListInt(0,0,0,1))); }
 	private void randomizeSharp() { SHARP = myRandom.nextBoolean(); }
 
 	private double randomRange(double min, double max) {
@@ -451,7 +451,7 @@ public class Starburst extends JDesktopPane {
 		System.out.println("newImage");
 		System.out.println(String.format("%.2f, %.2f, %.2f, %.2f, %d, %.2f, %d, %d, %d, %b", 
 				RBIAS, GBIAS, BBIAS, CENTERBIAS, 
-				GREYFACTOR, RANDOMFACTOR, SEED_METHOD, FINALIZATION_METHOD, REMOVE_ORDER, SHARP));
+				GREYFACTOR, RANDOMFACTOR, SEED_METHOD, FINALIZATION_METHOD, operations.getRemoveOrder().i(), SHARP));
 		if (RANDOMPROPERTIES) randomizeProperties();
 		if (RANDOM_OTHER_PROPS) randomizeOtherProperties();
 
@@ -463,7 +463,7 @@ public class Starburst extends JDesktopPane {
 
 		if(SEED_METHOD < 0) randomizeSeedMethod();
 		if(FINALIZATION_METHOD < 0) randomizeFinalization();
-		if(REMOVE_ORDER < 0) randomizeRemoveOrder();
+		if(operations.getRemoveOrder().i() < 0) randomizeRemoveOrder();
 
 		pixels = new int[canvas.getWidth()*canvas.getHeight()*canvas.getColorModel().getNumComponents()];
 		savePixels();
@@ -506,7 +506,7 @@ public class Starburst extends JDesktopPane {
 
 	private void setOtherParams() {
 		String curprops = String.format("%d, %d, %d, %d", 
-				SEED_METHOD, REMOVE_ORDER, SHARP?1:0, FINALIZATION_METHOD);
+				SEED_METHOD, operations.getRemoveOrder().i(), SHARP?1:0, FINALIZATION_METHOD);
 		//System.out.println(curprops);
 		Object in = javax.swing.JOptionPane.showInternalInputDialog(this,OTHER_PARAM_CHANGE_MESSAGE,
 				"Set Parameters", JOptionPane.QUESTION_MESSAGE, null, null, curprops);
@@ -526,7 +526,7 @@ public class Starburst extends JDesktopPane {
 		String[] params = input.split(",");
 		try {
 			SEED_METHOD = Integer.parseInt(params[0].trim());
-			REMOVE_ORDER = Integer.parseInt(params[1].trim());
+			operations.setRemoveOrder(Integer.parseInt(params[1].trim()));
 			SHARP = Integer.parseInt(params[2].trim())>0;
 			FINALIZATION_METHOD = Integer.parseInt(params[3].trim());
 		}
@@ -724,7 +724,7 @@ public class Starburst extends JDesktopPane {
 
 	private void seedImage(int how) {
 		if (how == 0) {
-			//addPoint(centerPair.x,centerPair.y)
+			//addPoint(centerPair)
 			for (int i = 0; i < 13; i++) {
 				int x = myRandom.nextInt(canvas.getWidth()), y =  myRandom.nextInt(canvas.getHeight());
 				operations.addPoint(x,y);
@@ -812,7 +812,7 @@ public class Starburst extends JDesktopPane {
 				}
 			}
 		} else if (how == 3) {
-			operations.addPoint(canvas.getWidth()/2, canvas.getHeight()/2);
+			operations.addPoint(centerPair);
 		}
 		//updatePixels();//I/NFO: updatePixels() for show
 	}
