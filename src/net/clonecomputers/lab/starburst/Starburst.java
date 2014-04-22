@@ -79,7 +79,7 @@ public class Starburst extends JDesktopPane {
 	// higher numbers for lighter, lower numbers for darker
 
 	private double CENTERBIAS = 10; //1 is no bias, higher means more towards center
-	// bigger numbers also take longer to make an image, but mean more toned down
+	// bigger numbers make the image tend to have larger patches of similar colors together
 
 	private int GREYFACTOR = 0;//0 is no bias.  
 	// bigger numbers for greyer, up to 127 for all grey
