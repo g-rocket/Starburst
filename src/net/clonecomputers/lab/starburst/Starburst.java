@@ -455,15 +455,15 @@ public class Starburst extends JDesktopPane {
 		if (RANDOMPROPERTIES) randomizeProperties();
 		if (RANDOM_OTHER_PROPS) randomizeOtherProperties();
 
-		if(RBIAS < 0) randomizeRBias();
-		if(GBIAS < 0) randomizeGBias();
-		if(BBIAS < 0) randomizeBBias();
+		//if(RBIAS < 0) randomizeRBias();
+		//if(GBIAS < 0) randomizeGBias();
+		//if(BBIAS < 0) randomizeBBias();
 		//if(CENTERBIAS < 0) randomizeCenterBias();
 		if(RANDOMFACTOR < 0) randomizeRandomfactor();
 
 		if(SEED_METHOD < 0) randomizeSeedMethod();
 		if(FINALIZATION_METHOD < 0) randomizeFinalization();
-		if(operations.getRemoveOrder().i() < 0) randomizeRemoveOrder();
+		//if(operations.getRemoveOrder().i() < 0) randomizeRemoveOrder();
 
 		pixels = new int[canvas.getWidth()*canvas.getHeight()*canvas.getColorModel().getNumComponents()];
 		savePixels();
