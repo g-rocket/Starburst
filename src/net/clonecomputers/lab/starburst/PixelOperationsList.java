@@ -28,7 +28,9 @@ public class PixelOperationsList {
 			if(i == 1) return FIRST;
 			if(i == 0) return RANDOM;
 			
-			if(Math.random() > .8) return FIRST;
+			double d = Math.random();
+			if(d > .8) return FIRST;
+			if(d > .5) return LAST;
 			else return RANDOM;
 		}
 	}
