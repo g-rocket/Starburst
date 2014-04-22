@@ -29,20 +29,26 @@ public class Starburst extends JDesktopPane {
 
 	private int doneCount=0;
 
+	/**
+	 * How any missing pixels are filled in <br /><br />
+	 * -1 > random <br />
+	 * 0 -> squares then loop x,y <br />
+	 * 1 -> loop x,y <br />
+	 * 2 -> fill with black <br />
+	 * 3 -> run almost normal program from center <br />
+	 * 4 -> do nothing
+	 */
 	private int FINALIZATION_METHOD = 3;
-	//-1 > random
-	//0 -> squares then loop x,y
-	//1 -> loop x,y
-	//2 -> fill with black
-	//3 -> run almost normal program from center
-	//4 -> do nothing
 
+	/**
+	 * How the image is seeded <br /><br />
+	 * -1 > random <br />
+	 * 0 -> 13 random points <br />
+	 * 1 -> black lines <br />
+	 * 2 -> colored lines <br />
+	 * 3 -> center point <br />
+	 */
 	private int SEED_METHOD = 2;
-	//-1 > random
-	//0 -> 13 random points
-	//1 -> black lines
-	//2 -> colored lines
-	//3 -> center point
 
 	//boolean RANDOMFACTOR<0 = true;
 
@@ -55,39 +61,81 @@ public class Starburst extends JDesktopPane {
 
 	private String SAVE_DIRECTORY = "/usr/share/images/clone-desktop/starburst-backgrounds/";
 
-	private boolean RANDOMPROPERTIES = true; // randomize image properties
-	//each time w/in a list of good values
+	/**
+	 * randomize image properties each time w/in a list of good values
+	 */
+	private boolean RANDOMPROPERTIES = true;
 
-	private boolean RANDOM_OTHER_PROPS = true; // randomize seed and
-	//finalization properties each time w/in a list of good values
+	/**
+	 * randomize seed and finalization properties each time
+	 * w/in a list of good values
+	 */
+	private boolean RANDOM_OTHER_PROPS = true;
 
-	private int LINE_LENGTH = 1000;// length of a line
-	// 10000 gives a good length, usually, I think
-	// there is a lot of turning and doubling back, 
-	// so the lines are actually much shorter
+	/**
+	 * The length of a line.  <br />
+	 * 1000 usually gives a good length, I think.
+	 * there is a bit of turning and doubling back, 
+	 * so the lines appear somewhat much shorter
+	 */
+	private int LINE_LENGTH = 1000;
+
+	/**
+	 * This is used to calculate how many lines to generate.  <br />
+	 * number of lines = (w*h)/(LINE_LENGTH*AVERAGE_INVERSE_LINE_DENSITY)
+	 */
 	private int AVERAGE_INVERSE_LINE_DENSITY = 300;
-	// number of lines = (w*h)/(LINE_LENGTH*AVERAGE_INVERSE_LINE_DENSITY)
 
-	private boolean SHARP = true; //whether to average when 
-	//no possible values are found or to choose a random endpoint
+	/**
+	 * whether to average when no possible values are found
+	 * or to choose a random endpoint
+	 */
+	private boolean SHARP = true;
 
-	private double RBIAS = 0; //0 is no bias.  
-	// higher numbers for lighter, lower numbers for darker
-	private double GBIAS = 0; //0 is no bias.  
-	// higher numbers for lighter, lower numbers for darker
-	private double BBIAS = 0; //0 is no bias.  
-	// higher numbers for lighter, lower numbers for darker
+	/**
+	 * The bias on the red component.  
+	 * 0 is no bias.  Higher numbers for lighter,
+	 * lower numbers for darker
+	 */
+	private double RBIAS = 0;
 
-	private double CENTERBIAS = 10; //1 is no bias, higher means more towards center
-	// bigger numbers make the image tend to have larger patches of similar colors together
+	/**
+	 * The bias on the blue component.  
+	 * 0 is no bias.  Higher numbers for lighter,
+	 * lower numbers for darker
+	 */
+	private double GBIAS = 0;
 
-	private int GREYFACTOR = 0;//0 is no bias.  
-	// bigger numbers for greyer, up to 127 for all grey
+	/**
+	 * The bias on the blue component.  
+	 * 0 is no bias.  Higher numbers for lighter,
+	 * lower numbers for darker
+	 */
+	private double BBIAS = 0;
 
+	/**
+	 * How much color components are biased towards the average of their neighbors.
+	 * 1 is no bias, higher means more towards center.  
+	 * Bigger numbers make the image tend to have larger patches of similar colors together
+	 */
+	private double CENTERBIAS = 10;
+
+	/**
+	 * This can be used to make the image in general greyer.  
+	 * The maximum value of any color component is 255&nbsp;-&nbsp;GREYFACTOR.  
+	 * the minimum value of any color component is GREYFACTOR.  
+	 * 0 is no bias.  Bigger numbers are greyer, up to 127
+	 * to make the image entirely grey
+	 */
+	private int GREYFACTOR = 0;
+
+	/**
+	 * This is used to determine if a cell should be included.  
+	 * the probabiity that a cell will be included on one check of this is
+	 * RANDOMFACTOR&nbsp;/&nbsp;(RANDOMFACTOR&nbsp;+&nbsp;1).  
+	 * 0 is 100% chance
+	 */
 	private double RANDOMFACTOR = 1.05;
-	// the probabiity check that determines if a cell should be included
-	// return true RANDOMFACTOR / (RANDOMFACTOR + 1) of the time
-	// 0 is 100% chance
 
 	private int genNum = 30;
 
