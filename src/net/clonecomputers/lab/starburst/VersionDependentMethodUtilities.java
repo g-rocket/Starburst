@@ -72,27 +72,27 @@ public class VersionDependentMethodUtilities {
 		window.setVisible(true);
 		setAutoRequestFocus(window, true);
 		if(javaVersion() == 7) { // work around bug in java 7 where top bar space is blank unless undecorated
-			FullScreenUtilities.addFullScreenListenerTo(window,new com.apple.eawt.FullScreenAdapter(){
+			FullScreenUtilities.addFullScreenListenerTo(window,new FullScreenAdapter(){
 				boolean working = false;
 				@Override
-				public void windowEnteredFullScreen(com.apple.eawt.AppEvent.FullScreenEvent e) {
+				public void windowEnteredFullScreen(AppEvent.FullScreenEvent e) {
 					if(working){
 						working = false;
 						return;
 					};
 					if(!((JFrame)e.getWindow()).isUndecorated()){
 						working = true;
-						com.apple.eawt.Application.getApplication().requestToggleFullScreen(e.getWindow());
+						Application.getApplication().requestToggleFullScreen(e.getWindow());
 					}
 				}
 				@Override
-				public void windowExitedFullScreen(com.apple.eawt.AppEvent.FullScreenEvent e) {
+				public void windowExitedFullScreen(AppEvent.FullScreenEvent e) {
 					if(working){
 						e.getWindow().dispose();
 						((JFrame)e.getWindow()).setUndecorated(true);
 						e.getWindow().pack();
 						e.getWindow().setVisible(true);
-						com.apple.eawt.Application.getApplication().requestToggleFullScreen(e.getWindow());
+						Application.getApplication().requestToggleFullScreen(e.getWindow());
 						return;
 					};
 					if(((JFrame)e.getWindow()).isUndecorated()){
