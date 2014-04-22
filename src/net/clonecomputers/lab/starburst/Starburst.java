@@ -105,7 +105,7 @@ public class Starburst extends JDesktopPane {
 			"---------------------------------------------------------------" + "\n" +
 			"0 |   13 points   |    random    |    average    | squares then loop x,y" + "\n" +
 			"1 |  black lines  |    first     | pick one side | loop x,y" + "\n" +
-			"2 | colored lines |              |               | fill with black" + "\n" +
+			"2 | colored lines |    last      |               | fill with black" + "\n" +
 			"3 | center point  |              |               | run normally from center point" + "\n";
 	private int pixnum=0;
 	private boolean current[][];
@@ -423,7 +423,7 @@ public class Starburst extends JDesktopPane {
 
 	private void randomizeSeedMethod() { SEED_METHOD = randomListInt(0, 1, 2, 3); }
 	private void randomizeFinalization() { FINALIZATION_METHOD = randomListInt(0, 1, 2, 3); }
-	private void randomizeRemoveOrder() { operations.setRemoveOrder(PixelOperationsList.RemoveOrder.get(randomListInt(0,0,0,1))); }
+	private void randomizeRemoveOrder() { operations.setRemoveOrder(randomListInt(0,0,0,1,2,2)); }
 	private void randomizeSharp() { SHARP = myRandom.nextBoolean(); }
 
 	private double randomRange(double min, double max) {
