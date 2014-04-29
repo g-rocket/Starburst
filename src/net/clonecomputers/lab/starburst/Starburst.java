@@ -647,6 +647,12 @@ public class Starburst extends JDesktopPane {
 				copyParamsFromFile(input);
 				//System.out.println("done");
 				newImage();
+				//try to fix focus problems
+				Starburst.this.requestFocusInWindow();
+				Starburst.this.requestFocus();
+				if(VersionDependentMethodUtilities.appleEawtAvailable()) {
+					VersionDependentMethodUtilities.appleForeground();
+				}
 			}});
 		break;
 		case 'q':
