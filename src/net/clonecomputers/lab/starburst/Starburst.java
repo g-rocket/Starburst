@@ -1085,14 +1085,14 @@ public class Starburst extends JDesktopPane {
 			if (maxb>curb) maxb=(curb+posvar);
 			if (minb<curb) minb=(curb-negvar);
 		}
-
+/*
 		maxr = clamp(0,maxr,255);
 		minr = clamp(0,minr,255);
 		maxg = clamp(0,maxg,255);
 		ming = clamp(0,ming,255);
 		maxb = clamp(0,maxb,255);
 		minb = clamp(0,minb,255);
-
+*/
 		int r=clamp(GREYFACTOR, biasedRandom(minr, maxr, CENTERBIAS, RBIAS), 255-GREYFACTOR);
 		int g=clamp(GREYFACTOR, biasedRandom(ming, maxg, CENTERBIAS, GBIAS), 255-GREYFACTOR);
 		int b=clamp(GREYFACTOR, biasedRandom(minb, maxb, CENTERBIAS, BBIAS), 255-GREYFACTOR);
