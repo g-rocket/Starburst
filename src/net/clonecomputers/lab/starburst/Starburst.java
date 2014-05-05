@@ -27,8 +27,6 @@ public class Starburst extends JDesktopPane {
 
 	private boolean looping = false;
 
-	private int doneCount=0;
-
 	/**
 	 * How any missing pixels are filled in <br /><br />
 	 * -1 > random <br />
@@ -930,12 +928,6 @@ public class Starburst extends JDesktopPane {
 				if (RANDOMFACTOR<=0||myRandom.nextDouble()*(RANDOMFACTOR+1)>1) operations.addPoint(x-1, y);
 			}
 		}
-		doneCount++;
-		if (doneCount==THREADNUM) {
-			synchronized(this) {
-				this.notifyAll();
-			}
-		}
 	}
 
 	private void fillAll() {
@@ -952,26 +944,21 @@ public class Starburst extends JDesktopPane {
 				}
 			}
 		});*/
-		doneCount=0;
+		List<Callable<Object>> threads = new ArrayList<Callable<Object>>();
 		for (int i=0;i<THREADNUM;i++) {
-			exec.execute(new Runnable() {
-				public void run() {
+			threads.add(new Callable<Object>() {
+				public Object call() {
 					//System.out.println("running");
 					fillAllPixels();
+					return null;
 				}
 			});
 		}
-		/*try{
-	   exec.awaitTermination(10,TimeUnit.SECONDS);
-	   }catch(InterruptedException ie){}*/
-		synchronized(this) {
-			try {
-				wait();
-			}
-			catch(InterruptedException ie) {
-			}
+		try {
+			exec.invokeAll(threads);
+		} catch (InterruptedException e) {
+			throw new RuntimeException(e);
 		}
-		//while(doneCount<THREADNUM);
 		if(0 != RANDOMFACTOR) finalizePixels(FINALIZATION_METHOD);
 		pixnum=0;
 	}
