@@ -6,7 +6,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.*;
 import java.io.*;
-import java.lang.reflect.*;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.*;
@@ -24,8 +23,6 @@ public class Starburst extends JDesktopPane {
 
 	private int negvar = 15;
 	private int posvar = 15;
-
-	private boolean looping = false;
 
 	/**
 	 * How any missing pixels are filled in <br /><br />
@@ -135,8 +132,6 @@ public class Starburst extends JDesktopPane {
 	 */
 	private double RANDOMFACTOR = 1.05;
 
-	private int genNum = 30;
-
 	private int THREADNUM = 5;
 
 	private static final String PARAM_CHANGE_MESSAGE = 
@@ -153,7 +148,6 @@ public class Starburst extends JDesktopPane {
 			"1 |  black lines  |    first     | pick one side | loop x,y" + "\n" +
 			"2 | colored lines |    last      |               | fill with black" + "\n" +
 			"3 | center point  |              |               | run normally from center point" + "\n";
-	private int pixnum=0;
 	private boolean current[][];
 	public static final ExecutorService exec = Executors.newCachedThreadPool();
 	//Executors.newFixedThreadPool(THREADNUM+1); // +1 for system.in listener
@@ -630,9 +624,6 @@ public class Starburst extends JDesktopPane {
 		case 's':
 			setOtherParams();
 		break;
-		case 'o':
-			generateFromImage();
-		break;
 		case 'c':
 			exec.execute(new Runnable(){public void run(){
 				//System.out.print("copying variables from ");
@@ -676,13 +667,6 @@ public class Starburst extends JDesktopPane {
 		default:
 			if(key != 27) asyncNewImage();
 		}
-	}
-
-	private void generateFromImage() {
-		File f = chooseFile(JFileChooser.OPEN_DIALOG, JFileChooser.FILES_ONLY);
-		PngReaderInt r = new PngReaderInt(f);
-		int[] imagePixels = new int[r.imgInfo.samplesPerRow];
-		//r.r
 	}
 
 	private static boolean isNamedAfterAncestor(File f) {
@@ -775,98 +759,105 @@ public class Starburst extends JDesktopPane {
 	}
 
 	private void seedImage(int how) {
-		if (how == 0) {
-			//addPoint(centerPair)
-			for (int i = 0; i < 13; i++) {
-				int x = myRandom.nextInt(canvas.getWidth()), y =  myRandom.nextInt(canvas.getHeight());
-				operations.addPoint(x,y);
-				current[x][y] = true;
-				setPixel(x, y, randomColor());
-			}
-		} else if (how == 1 || how == 2) {
-			int c = (how == 1)? Color.BLACK.getRGB(): randomColor();
-			int numberOfLines = (canvas.getWidth()*canvas.getHeight())/(LINE_LENGTH*AVERAGE_INVERSE_LINE_DENSITY);
-			if (numberOfLines<1) numberOfLines = 1;
-			for (int j = 0; j < numberOfLines; j++) {
-				//c = randomColor();
-				double x = myRandom.nextInt(canvas.getWidth()), y = myRandom.nextInt(canvas.getHeight());
-				double r = myRandom.nextInt(255), g = myRandom.nextInt(255), b = myRandom.nextInt(255);
-				double rx = myRandom.nextInt(7)-3, ry = myRandom.nextInt(7)-3;
-				double rr = myRandom.nextInt(7)-3, rg = myRandom.nextInt(7)-3, rb = myRandom.nextInt(7)-3;
-				for (int i = 0; i < LINE_LENGTH; i++) {
-					rx = lerp(rx, myRandom.nextInt(7)-3, .05);
-					ry = lerp(ry, myRandom.nextInt(7)-3, .05);
-					rr = lerp(rr, myRandom.nextInt(7)-3, .05);
-					rg = lerp(rg, myRandom.nextInt(7)-3, .05);
-					rb = lerp(rb, myRandom.nextInt(7)-3, .05);
-					double d = sqrt(pow(rx, 2)+pow(ry, 2));
-					double cd = sqrt(pow(rr, 2)+pow(rg, 2)+pow(rb, 2));
-					rx=rx/d;
-					ry=ry/d;
-					rr=rr/cd;
-					rg=rg/cd;
-					rb=rb/cd;
-					x = x+rx;
-					y = y+ry;
-					r = r+rx;
-					g = g+rx;
-					b = b+ry;
-					//println("("+x+","+y+")");
-					if (x<0) {
-						x=0;
-						rx=-rx;
-					}
-					if (y<0) {
-						y=0;
-						ry=-ry;
-					}
-					if (x>=canvas.getWidth()) {
-						x=canvas.getWidth()-1;
-						rx=-rx;
-					}
-					if (y>=canvas.getHeight()) {
-						y=canvas.getHeight()-1;
-						ry=-ry;
-					}
-					if (r<0) {
-						r=0;
-						rr=-rr;
-					}
-					if (g<0) {
-						g=0;
-						rg=-rg;
-					}
-					if (b<0) {
-						b=0;
-						rb=-rb;
-					}
-					if (r>=255) {
-						r=255-1;
-						rr=-rr;
-					}
-					if (g>=255) {
-						g=255-1;
-						rg=-rg;
-					}
-					if (b>=255) {
-						b=255-1;
-						rb=-rb;
-					}
-					if (how == 2) c = color((int)r,(int)g,(int)b);
-					//c = lerpColor(c,(int)randnum(#FFFFFF),.1);
-					//operations.add(new Pair((int)x, (int)y));
-					current[(int)x][(int)y] = true;
-					setPixel((int)x, (int)y, c);
-					if(how == 2) {
-						canvas.setRGB((int)x, (int)y, c);
-						this.repaint((int)x, (int)y, 1, 1);
-					}
+		switch(how) {
+			case 0:
+				//addPoint(centerPair)
+				for (int i = 0; i < 13; i++) {
+					int x = myRandom.nextInt(canvas.getWidth()), y =  myRandom.nextInt(canvas.getHeight());
+					operations.addPoint(x,y);
+					current[x][y] = true;
+					setPixel(x, y, randomColor());
 				}
-			}
-		} else if (how == 3) {
-			operations.addPoint(centerPair);
+			break;
+			case 1: case 2:
+				int numberOfLines = (canvas.getWidth()*canvas.getHeight())/(LINE_LENGTH*AVERAGE_INVERSE_LINE_DENSITY);
+				if (numberOfLines<1) numberOfLines = 1;
+				for (int j = 0; j < numberOfLines; j++) {
+					generateLine(how == 2);
+				}
+			break;
+			case 3:
+				operations.addPoint(centerPair);
+			break;
+			case 4: break;
+			default:
+				throw new IllegalArgumentException("Invalid seed method: "+how);
 		}
 		//updatePixels();//I/NFO: updatePixels() for show
+	}
+
+	private void generateLine(boolean hasColor) {
+		int c = hasColor? randomColor(): 0x000000;
+		double x = myRandom.nextInt(canvas.getWidth()), y = myRandom.nextInt(canvas.getHeight());
+		double r = myRandom.nextInt(255), g = myRandom.nextInt(255), b = myRandom.nextInt(255);
+		double rx = myRandom.nextInt(7)-3, ry = myRandom.nextInt(7)-3;
+		double rr = myRandom.nextInt(7)-3, rg = myRandom.nextInt(7)-3, rb = myRandom.nextInt(7)-3;
+		for (int i = 0; i < LINE_LENGTH; i++) {
+			rx = lerp(rx, myRandom.nextInt(7)-3, .05);
+			ry = lerp(ry, myRandom.nextInt(7)-3, .05);
+			rr = lerp(rr, myRandom.nextInt(7)-3, .05);
+			rg = lerp(rg, myRandom.nextInt(7)-3, .05);
+			rb = lerp(rb, myRandom.nextInt(7)-3, .05);
+			
+			double d = hypot(rx, ry);
+			double cd = sqrt(rr*rr + rg*rg + rb*rb);
+			
+			rx=rx/d; ry=ry/d;
+			rr=rr/cd; rg=rg/cd; rb=rb/cd;
+			
+			x = x+rx; y = y+ry;
+			r = r+rx; g = g+rx; b = b+ry;
+			
+			if (x<0) {
+				x=0;
+				rx=-rx;
+			}
+			if (y<0) {
+				y=0;
+				ry=-ry;
+			}
+			if (x>=canvas.getWidth()) {
+				x=canvas.getWidth()-1;
+				rx=-rx;
+			}
+			if (y>=canvas.getHeight()) {
+				y=canvas.getHeight()-1;
+				ry=-ry;
+			}
+			if (r<0) {
+				r=0;
+				rr=-rr;
+			}
+			if (g<0) {
+				g=0;
+				rg=-rg;
+			}
+			if (b<0) {
+				b=0;
+				rb=-rb;
+			}
+			if (r>=255) {
+				r=255-1;
+				rr=-rr;
+			}
+			if (g>=255) {
+				g=255-1;
+				rg=-rg;
+			}
+			if (b>=255) {
+				b=255-1;
+				rb=-rb;
+			}
+			if (hasColor) c = color((int)r,(int)g,(int)b);
+			//c = lerpColor(c,(int)randnum(#FFFFFF),.1);
+			//operations.add(new Pair((int)x, (int)y));
+			current[(int)x][(int)y] = true;
+			setPixel((int)x, (int)y, c);
+			if(hasColor) {
+				canvas.setRGB((int)x, (int)y, c);
+				this.repaint((int)x, (int)y, 1, 1);
+			}
+		}
 	}
 
 	private void fillOperations() {
@@ -960,7 +951,6 @@ public class Starburst extends JDesktopPane {
 			throw new RuntimeException(e);
 		}
 		if(0 != RANDOMFACTOR) finalizePixels(FINALIZATION_METHOD);
-		pixnum=0;
 	}
 
 	private void randomSeedPixels() {
