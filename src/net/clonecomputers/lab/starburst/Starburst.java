@@ -134,20 +134,26 @@ public class Starburst extends JDesktopPane {
 
 	private int THREADNUM = 5;
 
-	private static final String PARAM_CHANGE_MESSAGE = 
-			"Please input the image generation paramaters in the form" + "\n" +
-			"(red bias, green bias, blue bias, center bias, grey factor, random layout factor)" + "\n" +
-			"or 'random' for random values or 'same' for current values, or cancel to exit unchanged";
-	private static final String OTHER_PARAM_CHANGE_MESSAGE = 
-			"Please input the seeding and finalizations paramaters in the form" + "\n" +
-			"(seed method, finalization method)" + "\n" +
-			"or 'random' for random values or 'same' for current values, or cancel to exit unchanged" + "\n" +
-			"# |  Seed Method  | Remove order | Out of Range  | Finalization" + "\n" +
-			"---------------------------------------------------------------" + "\n" +
-			"0 |   13 points   |    random    |    average    | squares then loop x,y" + "\n" +
-			"1 |  black lines  |    first     | pick one side | loop x,y" + "\n" +
-			"2 | colored lines |    last      |               | fill with black" + "\n" +
-			"3 | center point  |              |               | run normally from center point" + "\n";
+	private static final JLabel[] PARAM_CHANGE_MESSAGE = {
+		new JLabel("Please input the image generation paramaters in the form"),
+		new JLabel("(red bias, green bias, blue bias, center bias, grey factor, random layout factor)"),
+		new JLabel("or 'random' for random values or 'same' for current values, or cancel to exit unchanged"),
+	};
+	private static final JLabel[] OTHER_PARAM_CHANGE_MESSAGE = {
+		new JLabel("Please input the seeding and finalizations paramaters in the form"),
+		new JLabel("(seed method, remove order, out of range resolution, finalization method)"),
+		new JLabel("or 'random' for random values or 'same' for current values, or cancel to exit unchanged"),
+		new JLabel("# |  Seed Method  | Remove order | Out of Range  | Finalization"),
+		new JLabel("---------------------------------------------------------------"),
+		new JLabel("0 |   13 points   |    random    |    average    | squares then loop x,y"),
+		new JLabel("1 |  black lines  |    first     | pick one side | loop x,y" + "\n"),
+		new JLabel("2 | colored lines |    last      |               | fill with black"),
+		new JLabel("3 | center point  |              |               | run normally from center point"),
+	};
+	static {
+		for(JLabel l: PARAM_CHANGE_MESSAGE) l.setFont(new Font("Monospaced",Font.PLAIN,12));
+		for(JLabel l: OTHER_PARAM_CHANGE_MESSAGE) l.setFont(new Font("Monospaced",Font.PLAIN,12));
+	}
 	private boolean current[][];
 	public static final ExecutorService exec = Executors.newCachedThreadPool();
 	//Executors.newFixedThreadPool(THREADNUM+1); // +1 for system.in listener
