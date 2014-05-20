@@ -236,7 +236,7 @@ public class Starburst extends JDesktopPane {
 				BufferedReader r = new BufferedReader(new InputStreamReader(System.in));
 				while(true) {
 					try {
-						String arg = r.readLine().trim();
+						String arg = r.readLine(); // wait for '\n'
 						for(char c: arg.toCharArray()) {
 							Starburst.this.keyPressed(c);
 						}
