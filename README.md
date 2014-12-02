@@ -2,6 +2,7 @@ Starburst
 =========
 
 #Image generation program
+Evolved from [Starburst-processing](https://github.com/g-rocket/Starburst-processing/)
 
 #Key bindings
 * `p` = open generate property change dialog
