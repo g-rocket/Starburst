@@ -38,9 +38,10 @@ public class VersionDependentMethodUtilities {
 		}
 	}
 	
-	public static void toFullScreen(JFrame window, GraphicsDevice gd){
+	public static void toFullScreen(JFrame window, GraphicsDevice gd, boolean tryAppleFullscreen){
 		if(appleEawtAvailable()) {
-			if(appleOSVersion() >= 7&& // lion and above
+			if(tryAppleFullscreen && 
+			   appleOSVersion() >= 7 && // lion and above
 			   javaVersion() >= 7){ // java 7 and above
 				System.out.println("trying to apple fullscreen");
 				appleFullscreen(window);
