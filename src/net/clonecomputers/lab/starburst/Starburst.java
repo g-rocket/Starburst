@@ -2,6 +2,8 @@ package net.clonecomputers.lab.starburst;
 
 import static java.lang.Math.*;
 
+import com.madgag.gif.fmsware.*;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.*;
@@ -134,6 +136,8 @@ public class Starburst extends JDesktopPane {
 
 	private int THREADNUM = 5;
 
+	private AnimatedGifEncoder gifEnc = null;
+
 	private static final JLabel[] PARAM_CHANGE_MESSAGE = {
 		new JLabel("Please input the image generation paramaters in the form"),
 		new JLabel("(red bias, green bias, blue bias, center bias, grey factor, random layout factor)"),
@@ -162,7 +166,9 @@ public class Starburst extends JDesktopPane {
 	private PixelOperationsList operations;
 
 	public static void main(final String[] args) {
-		SwingUtilities.invokeLater(new Runnable(){@Override public void run(){
+		SwingUtilities.invokeLater(new Runnable(){private boolean makingGif;
+
+		@Override public void run(){
 			GraphicsDevice[] screens = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
 			GraphicsDevice biggestScreen = null;
 			int maxPixelsSoFar = 0;
@@ -178,21 +184,59 @@ public class Starburst extends JDesktopPane {
 			//window.setBackground(Color.WHITE);
 			//window.setForeground(Color.WHITE);
 			Dimension size;
-			switch(args.length) {
+			AnimatedGifEncoder gifEnc = null;
+			int howManyNumbers = 0;
+			String[] dims = new String[2];
+			for(int i = 0; i < args.length; i++) {
+				if(isInt(args[i])) dims[howManyNumbers++] = args[i];
+				args[i] = null;
+			}
+			Arrays.sort(args);
+			switch(howManyNumbers) {
 			case 0:
 				size = new Dimension(d.getWidth(), d.getHeight());
-			break;
+				break;
 			case 1:
 				size = new Dimension(
 						Integer.parseInt(args[0].split(",")[0].trim()),
 						Integer.parseInt(args[0].split(",")[1].trim()));
-			break;
+				break;
 			case 2:
 				size = new Dimension(
 						Integer.parseInt(args[0].trim()),
 						Integer.parseInt(args[1].trim()));
-			break;
-			default: // args.length > 2 means read from stdin
+				break;
+			default:
+				throw new IllegalArgumentException("too many numbers");
+			}
+			if(Arrays.binarySearch(args,"gif") > 0) {
+				FileDialog gifFileFinder = new FileDialog((Frame)null, "Where do you want to save the gif", FileDialog.SAVE);
+				gifFileFinder.setVisible(true);
+				while(gifFileFinder.getFile() == null) Thread.yield();
+				File f = new File(gifFileFinder.getDirectory(), gifFileFinder.getFile());
+				try {
+					f.createNewFile();
+				} catch (IOException e) {
+					throw new RuntimeException(e);
+				}
+				gifEnc = new AnimatedGifEncoder();
+				gifEnc.setDispose(1);
+				gifEnc.setBackground(Color.WHITE);
+				gifEnc.setTransparent(Color.WHITE);
+				try {
+					gifEnc.start(new BufferedOutputStream(new FileOutputStream(f)));
+				} catch (FileNotFoundException e) {
+					throw new RuntimeException(e);
+				}
+				size = new Dimension(
+						Integer.parseInt(args[1].trim()),
+						Integer.parseInt(args[2].trim()));
+				BufferedImage allBlack = new BufferedImage(size.width, size.height, BufferedImage.TYPE_INT_ARGB);
+				Graphics g = allBlack.getGraphics();
+				g.drawRect(0, 0, allBlack.getWidth(), allBlack.getHeight());
+				gifEnc.addFrame(allBlack);
+			}
+			if(Arrays.binarySearch(args, "inputdims") > 0) {
 				System.out.println("Input dimensions");
 				BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 				String arg0;
@@ -201,7 +245,7 @@ public class Starburst extends JDesktopPane {
 				} catch (IOException e) {
 					throw new RuntimeException(e);
 				}
-				if(arg0.matches("\\d+\\s*,\\s*\\d+")){ // WWW, HHH
+				if(arg0.matches("\\d+\\s*[, ]\\s*\\d+")){ // WWW, HHH
 					size = new Dimension(
 							Integer.parseInt(arg0.split(",")[0].trim()),
 							Integer.parseInt(arg0.split(",")[1].trim()));
@@ -219,12 +263,24 @@ public class Starburst extends JDesktopPane {
 					throw new IllegalArgumentException("Invalid dimensions");
 				}
 			}
-			Starburst s = new Starburst(size);
+			Starburst s = new Starburst(size, gifEnc);
 			s.setupKeyAndClickListeners(window);
 			window.setContentPane(s);
-			VersionDependentMethodUtilities.toFullScreen(window,biggestScreen);
+			if(gifEnc == null) {
+				VersionDependentMethodUtilities.toFullScreen(window,biggestScreen,false);
+			} else {
+				window.setVisible(true);
+				window.setSize(size);
+			}
 			s.asyncNewImage();
 		}});
+	}
+
+	private static boolean isInt(String arg) {
+		for(char c: arg.toCharArray()) {
+			if(c < '0' || c > '9') return false;
+		}
+		return true;
 	}
 
 	public void setupKeyAndClickListeners(JFrame window) {
@@ -300,6 +356,11 @@ public class Starburst extends JDesktopPane {
 
 	public Starburst(Dimension size) {
 		this(size.width, size.height);
+	}
+
+	public Starburst(Dimension size, AnimatedGifEncoder gifEnc) {
+		this(size.width, size.height);
+		this.gifEnc = gifEnc;
 	}
 
 	private void genMany(String outputDirectory, int howMany) {
@@ -516,6 +577,9 @@ public class Starburst extends JDesktopPane {
 		//loadPixels();
 		falsifyCurrent();
 		seedImage(SEED_METHOD);
+		if(gifEnc != null) {
+			gifEnc.setDelay(500);
+		}
 		System.out.println("done seeding");
 		fillOperations();
 		fillAll();
@@ -525,6 +589,10 @@ public class Starburst extends JDesktopPane {
 		//cancelPhantomProcessorUsage();
 		System.out.println("end newImage");
 		System.out.printf("took %d millis\n",System.currentTimeMillis()-sTime);
+		if(gifEnc != null) {
+			gifEnc.finish();
+			System.exit(0);
+		}
 	}
 
 	private void savePixels() {
@@ -623,13 +691,13 @@ public class Starburst extends JDesktopPane {
 		switch(key) {
 		case 'v':
 			mousePressed();
-		break;
+			break;
 		case 'p':
 			setParams();
-		break;
+			break;
 		case 's':
 			setOtherParams();
-		break;
+			break;
 		case 'c':
 			exec.execute(new Runnable(){public void run(){
 				//System.out.print("copying variables from ");
@@ -649,10 +717,10 @@ public class Starburst extends JDesktopPane {
 					VersionDependentMethodUtilities.appleForeground();
 				}
 			}});
-		break;
+			break;
 		case 'q':
 			System.exit(0);
-		break;
+			break;
 		case 'm':
 			exec.execute(new Runnable(){@Override public void run(){
 				String input = javax.swing.JOptionPane.showInternalInputDialog(Starburst.this,
@@ -669,7 +737,7 @@ public class Starburst extends JDesktopPane {
 				System.out.printf("about to generate %d images\n",Integer.parseInt(input));
 				genMany(outputDirectory.getAbsolutePath(), Integer.parseInt(input));
 			}});
-		break;
+			break;
 		default:
 			if(key != 27) asyncNewImage();
 		}
@@ -766,28 +834,28 @@ public class Starburst extends JDesktopPane {
 
 	private void seedImage(int how) {
 		switch(how) {
-			case 0:
-				//addPoint(centerPair)
-				for (int i = 0; i < 13; i++) {
-					int x = myRandom.nextInt(canvas.getWidth()), y =  myRandom.nextInt(canvas.getHeight());
-					operations.addPoint(x,y);
-					current[x][y] = true;
-					setPixel(x, y, randomColor());
-				}
+		case 0:
+			//addPoint(centerPair)
+			for (int i = 0; i < 13; i++) {
+				int x = myRandom.nextInt(canvas.getWidth()), y =  myRandom.nextInt(canvas.getHeight());
+				operations.addPoint(x,y);
+				current[x][y] = true;
+				setPixel(x, y, randomColor());
+			}
 			break;
-			case 1: case 2:
-				int numberOfLines = (canvas.getWidth()*canvas.getHeight())/(LINE_LENGTH*AVERAGE_INVERSE_LINE_DENSITY);
-				if (numberOfLines<1) numberOfLines = 1;
-				for (int j = 0; j < numberOfLines; j++) {
-					generateLine(how == 2);
-				}
+		case 1: case 2:
+			int numberOfLines = (canvas.getWidth()*canvas.getHeight())/(LINE_LENGTH*AVERAGE_INVERSE_LINE_DENSITY);
+			if (numberOfLines<1) numberOfLines = 1;
+			for (int j = 0; j < numberOfLines; j++) {
+				generateLine(how == 2);
+			}
 			break;
-			case 3:
-				operations.addPoint(centerPair);
+		case 3:
+			operations.addPoint(centerPair);
 			break;
-			case 4: break;
-			default:
-				throw new IllegalArgumentException("Invalid seed method: "+how);
+		case 4: break;
+		default:
+			throw new IllegalArgumentException("Invalid seed method: "+how);
 		}
 		//updatePixels();//I/NFO: updatePixels() for show
 	}
@@ -804,16 +872,16 @@ public class Starburst extends JDesktopPane {
 			rr = lerp(rr, myRandom.nextInt(7)-3, .05);
 			rg = lerp(rg, myRandom.nextInt(7)-3, .05);
 			rb = lerp(rb, myRandom.nextInt(7)-3, .05);
-			
+
 			double d = hypot(rx, ry);
 			double cd = sqrt(rr*rr + rg*rg + rb*rb);
-			
+
 			rx=rx/d; ry=ry/d;
 			rr=rr/cd; rg=rg/cd; rb=rb/cd;
-			
+
 			x = x+rx; y = y+ry;
 			r = r+rx; g = g+rx; b = b+ry;
-			
+
 			if (x<0) {
 				x=0;
 				rx=-rx;
@@ -891,6 +959,17 @@ public class Starburst extends JDesktopPane {
 		pixels[i+2]=blue(c);
 		canvas.setRGB((int)x, (int)y, c);
 		this.repaint((int)x, (int)y, 1, 1);
+		if(gifEnc != null) {
+			BufferedImage frameImage = new BufferedImage(canvas.getWidth(), canvas.getHeight(), BufferedImage.TYPE_INT_RGB);
+			Graphics g = frameImage.getGraphics();
+			g.setColor(Color.BLACK);
+			g.drawRect(0, 0, canvas.getWidth(), canvas.getHeight());
+			g.setColor(new Color(c));
+			g.drawRect(x, y, 1, 1);
+			gifEnc.setDelay(0);
+			gifEnc.addFrame(frameImage);
+			gifEnc.setTransparent(Color.BLACK);
+		}
 	}
 
 	private static double lerp(double a, double b, double lerpVal){
@@ -983,21 +1062,21 @@ public class Starburst extends JDesktopPane {
 					if (!current[x][y]) fillPixel(x, y);
 				}
 			}
-		break; 
+			break; 
 		case 1:
 			for (int x=0;x<canvas.getWidth();x++) {
 				for (int y=0;y<canvas.getHeight();y++) {
 					if (!current[x][y]) fillPixel(x, y);
 				}
 			}
-		break;
+			break;
 		case 2:
 			for (int x=0;x<canvas.getWidth();x++) {
 				for (int y=0;y<canvas.getHeight();y++) {
 					if (!current[x][y]) setPixel(x, y, Color.BLACK.getRGB());
 				}
 			}
-		break;
+			break;
 		case 3:
 			boolean[][] localcurrent = new boolean[canvas.getWidth()][canvas.getHeight()];
 			operations.addPoint(centerPair.x,centerPair.y);
@@ -1020,7 +1099,7 @@ public class Starburst extends JDesktopPane {
 				}
 				localcurrent[x][y]=true;
 			}
-		break;
+			break;
 		}
 	}
 
@@ -1068,14 +1147,14 @@ public class Starburst extends JDesktopPane {
 			if (maxb>curb) maxb=(curb+posvar);
 			if (minb<curb) minb=(curb-negvar);
 		}
-/*
+		/*
 		maxr = clamp(0,maxr,255);
 		minr = clamp(0,minr,255);
 		maxg = clamp(0,maxg,255);
 		ming = clamp(0,ming,255);
 		maxb = clamp(0,maxb,255);
 		minb = clamp(0,minb,255);
-*/
+		 */
 		int r=clamp(GREYFACTOR, biasedRandom(minr, maxr, CENTERBIAS, RBIAS), 255-GREYFACTOR);
 		int g=clamp(GREYFACTOR, biasedRandom(ming, maxg, CENTERBIAS, GBIAS), 255-GREYFACTOR);
 		int b=clamp(GREYFACTOR, biasedRandom(minb, maxb, CENTERBIAS, BBIAS), 255-GREYFACTOR);
