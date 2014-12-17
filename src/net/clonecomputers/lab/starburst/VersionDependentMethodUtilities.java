@@ -8,6 +8,20 @@ import javax.swing.*;
 import com.apple.eawt.*;
 
 public class VersionDependentMethodUtilities {
+	public static void initLookAndFeel() {
+		try {
+			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+		} catch (ClassNotFoundException e) {
+			throw new RuntimeException(e);
+		} catch (InstantiationException e) {
+			throw new RuntimeException(e);
+		} catch (IllegalAccessException e) {
+			throw new RuntimeException(e);
+		} catch (UnsupportedLookAndFeelException e) {
+			throw new RuntimeException(e);
+		}
+	}
+	
 	public static int javaVersion() {
 		return Integer.parseInt(System.getProperty("java.specification.version").split("[.]")[1]);
 	}
