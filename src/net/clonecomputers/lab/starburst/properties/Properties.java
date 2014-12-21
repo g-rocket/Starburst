@@ -2,7 +2,6 @@ package net.clonecomputers.lab.starburst.properties;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.beans.*;
 import java.io.*;
 import java.util.*;
 import java.util.List;
@@ -108,6 +107,8 @@ public class Properties {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				Component window = SwingUtilities.getAncestorOfClass(RootPaneContainer.class, changeDialog);
+				window.setVisible(false);
+				/*
 				if(window instanceof Window) {
 					window.dispatchEvent(new WindowEvent((Window)window, WindowEvent.WINDOW_CLOSING));
 				} else if(window instanceof JInternalFrame) {
@@ -120,6 +121,7 @@ public class Properties {
 				} else {
 					throw new IllegalStateException("I can't close a "+window.getClass().getSimpleName());
 				}
+				*/
 				synchronized (Properties.this) {
 					Properties.this.notifyAll();
 				}
@@ -137,7 +139,8 @@ public class Properties {
 					p.applyChangePanel();
 				}
 				Component window = SwingUtilities.getAncestorOfClass(RootPaneContainer.class, changeDialog);
-				if(window instanceof Window) {
+				window.setVisible(false);
+				/*if(window instanceof Window) {
 					window.dispatchEvent(new WindowEvent((Window)window, WindowEvent.WINDOW_CLOSING));
 				} else if(window instanceof JInternalFrame) {
 					try {
@@ -148,7 +151,7 @@ public class Properties {
 					}
 				} else {
 					throw new IllegalStateException("I can't close a "+window.getClass().getSimpleName());
-				}
+				}*/
 				synchronized (Properties.this) {
 					Properties.this.notifyAll();
 				}
@@ -371,5 +374,11 @@ public class Properties {
 
 	public void importFromPNG(List<PngChunk> chunks) {
 		//TODO: make this do something
+	}
+
+	public void randomize() {
+		for(Property<?> p: allProperties.values()) {
+			p.maybeRandomize();
+		}
 	}
 }
