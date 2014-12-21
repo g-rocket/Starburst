@@ -1,0 +1,147 @@
+{
+	"Seed Method": {
+		"type": "enum",
+		"category": "Seed properties",
+		"values": {
+			"Points": {
+				"How many": {
+					"type": "int",
+					"range": [0, "Infinity"],
+					"slider": [1,20]
+				},
+				"Distribution": {
+					"type": "double",
+					"range": [0, 1]
+				}
+			},
+			"Lines": {
+				"Distribution": {
+					"Length": {
+						"type": "int",
+						"range": [0, "Infinity"],
+						"slider": [0,5000],
+						"random": {
+							"type": "gaussian",
+							"mean": 1000,
+							"variance": 400
+						},
+						"recommended": 1000
+					},
+					"Density": {
+						"type": "double",
+						"formula": "number of lines = density * (total area / area of 1 line) = density * width * height / length",
+						"range": [0, 1],
+						"random": {
+							"type": "biased",
+							"bias": 0.02
+						},
+						"recommended": 0.00333
+					}
+				},
+				"Color Scheme": {
+					"type": "enum",
+					"values": {
+						"Solid": {
+							"Color": {
+								"type": "Color",
+								"recommended": "Black"
+							}
+						},
+						"Varying": {}
+					}
+				}
+			}
+		}
+	},
+	"Out-of-range resolution": {
+		"type": "enum",
+		"category": "Pixel generation",
+		"values": {
+			"Average": {},
+			"Randomly choose one side": {},
+			"Randomly choose a neighbor": {},
+			"Other": {
+				"disabled": true
+			}
+		}
+	},
+	
+	"Color Biases": {
+		"category": "Pixel generation",
+		"Red Bias": {
+			"type": "double",
+			"range": ["-Infinity", "Infinity"]
+		},
+		"Green Bias": {
+			"type": "double",
+			"range": ["-Infinity", "Infinity"]
+		},
+		"Blue Bias": {
+			"type": "double",
+			"range": ["-Infinity", "Infinity"]
+		}
+	},
+	"Center bias": {
+		"category": "Pixel generation",
+		"type": "double",
+		"range": [0, "Infinity"],
+		"slider": [0,20]
+	},
+	"Remove order bias": {
+		"category": "Pixel generation",
+		"formula": "loc in array = random() ^ (log(bias)/log(.5))",
+		"type": "double",
+		"range": [0, 1]
+	},
+	"Pixel Variation": {
+		"category": "Pixel generation",
+		"Positive Variation": {
+			"type": "int",
+			"range": [0, 256],
+			"random": false,
+			"initialValue": 15,
+			"slider": [0,20]
+		},
+		"Negative Variation": {
+			"type": "int",
+			"range": [0, 256],
+			"random": false,
+			"initialValue": 15,
+			"slider": [0,20]
+		}
+	},
+	"Probability of Inclusion": {
+		"category": "Pixel generation",
+		"type": "double",
+		"range": [0,1]
+	},
+	"Prevent Overflows": {
+		"category": "Pixel generation",
+		"type": "boolean"
+	},
+	"Finalization Method": {
+		"type": "enum",
+		"values": {
+			"Squares then loop (x,y)": {},
+			"Loop (x,y)": {},
+			"Fill with black": {},
+			"Redo from point": {}
+		},
+		"category": "General"
+	},
+	"Size": {
+		"category": "General",
+		"Width": {
+			"type": "int",
+			"range": [0, "Infinity"],
+			"random": false,
+			"slider": false
+		},
+		"Height": {
+			"type": "int",
+			"range": [0, "Infinity"],
+			"random": false,
+			"slider": false
+		}
+	}
+}

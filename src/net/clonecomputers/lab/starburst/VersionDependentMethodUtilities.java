@@ -1,6 +1,7 @@
 package net.clonecomputers.lab.starburst;
 
 import java.awt.*;
+import java.awt.event.*;
 import java.lang.reflect.*;
 
 import javax.swing.*;
@@ -8,6 +9,7 @@ import javax.swing.*;
 import com.apple.eawt.*;
 
 public class VersionDependentMethodUtilities {
+
 	public static void initLookAndFeel() {
 		try {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
@@ -52,27 +54,31 @@ public class VersionDependentMethodUtilities {
 		}
 	}
 	
-	public static void toFullScreen(JFrame window, GraphicsDevice gd, boolean tryAppleFullscreen){
-		if(appleEawtAvailable()) {
-			if(tryAppleFullscreen && 
-			   appleOSVersion() >= 7 && // lion and above
-			   javaVersion() >= 7){ // java 7 and above
-				System.out.println("trying to apple fullscreen");
-				appleFullscreen(window);
-			} else { // Snow Leopard and below OR apple java 6 and below TODO: test this on SL
-				if(javaVersion() >= 7) setAutoRequestFocus(window, true);
-				window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-				window.setUndecorated(true);
-				//window.setExtendedState(JFrame.MAXIMIZED_BOTH);
-				gd.setFullScreenWindow(window);
-				window.toFront();
-				Rectangle r = gd.getDefaultConfiguration().getBounds();
-				window.setBounds(r);
-				//window.pack();
-			}
+	public static void toFullScreen(JFrame window, GraphicsDevice gd, boolean tryAppleFullscreen, boolean tryExclusiveFullscreen){
+		if(appleEawtAvailable() && 
+				tryAppleFullscreen && 
+				appleOSVersion() >= 7 && // lion and above
+				javaVersion() >= 7){ // java 7 and above
+			System.out.println("trying to apple fullscreen");
+			enableAppleFullscreen(window);
+			doAppleFullscreen(window);
+		} else if(appleEawtAvailable() && // Snow Leopard and below OR apple java 6 and below TODO: test this on SL
+				tryExclusiveFullscreen &&
+				gd.isFullScreenSupported()){
+			if(javaVersion() >= 7) setAutoRequestFocus(window, true);
+			window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+			window.setUndecorated(true);
+			//window.setExtendedState(JFrame.MAXIMIZED_BOTH);
+			gd.setFullScreenWindow(window);
+			window.toFront();
+			Rectangle r = gd.getDefaultConfiguration().getBounds();
+			window.setBounds(r);
+			//window.pack();
 		} else { // Windows and Linux TODO: test this
 			window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 			window.setUndecorated(true);
+			window.setSize(gd.getDisplayMode().getWidth(), gd.getDisplayMode().getHeight());
+			window.setLocation(0, 0);
 			window.setExtendedState(JFrame.MAXIMIZED_BOTH);
 			window.toFront();
 		}
@@ -80,9 +86,51 @@ public class VersionDependentMethodUtilities {
 		window.setVisible(true);
 	}
 
+	public static void enableFullscreen(JFrame window, GraphicsDevice gd) {
+		enableFullscreen(window, gd, false);
+	}
+	
+	public static void enableFullscreen(final JFrame window, final GraphicsDevice gd, final boolean useExclusiveFullscreen) {
+		window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		if(appleEawtAvailable() && 
+				appleOSVersion() >= 7 && // lion and above
+				javaVersion() >= 7){ // java 7 and above
+			System.out.println("trying to apple fullscreen");
+			enableAppleFullscreen(window);
+		}
+		window.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyReleased(KeyEvent e) {
+				if(e.getKeyCode() == KeyEvent.VK_F11) {
+					e.consume();
+					window.setVisible(false); // hide, so we can do stuff
+					if(window.isUndecorated()) { // we are fullscreen, we should become unfullscreen
+						window.setUndecorated(false);
+						if(window.equals(gd.getFullScreenWindow())) { // we used exclusive mode to go fullscreen
+							gd.setFullScreenWindow(null);
+						} else { // we just got really big
+							window.setExtendedState(JFrame.NORMAL);
+						}
+					} else { // we aren't fullscreen, we should become fullscreen
+						if(javaVersion() >= 7) setAutoRequestFocus(window, true);
+						window.setUndecorated(true);
+						window.setBounds(gd.getDefaultConfiguration().getBounds());
+						if(useExclusiveFullscreen) {
+							gd.setFullScreenWindow(window);
+						} else {
+							window.setExtendedState(JFrame.MAXIMIZED_BOTH);
+							window.toFront();
+						}
+					}
+					window.pack();
+					window.setVisible(true);
+				}
+			}
+		});
+	}
+
 	@SuppressWarnings("restriction")
-	public static void appleFullscreen(JFrame window) {
-		//window.setUndecorated(true);
+	public static void enableAppleFullscreen(JFrame window) {
 		window.pack();
 		window.setVisible(true);
 		setAutoRequestFocus(window, true);
@@ -119,6 +167,10 @@ public class VersionDependentMethodUtilities {
 			});
 		}
 		FullScreenUtilities.setWindowCanFullScreen(window,true); //TODO: test compiling on non-mac
+	}
+
+	@SuppressWarnings("restriction")
+	public static void doAppleFullscreen(JFrame window) {
 		Application.getApplication().requestToggleFullScreen(window);//TODO: compiles non-mac?
 	}
 

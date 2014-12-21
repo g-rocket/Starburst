@@ -1,39 +1,15 @@
 package net.clonecomputers.lab.starburst;
 
+import static java.lang.Math.*;
+
 import java.util.*;
 
 public class PixelOperationsList {
-	private RemoveOrder removeOrder = RemoveOrder.RANDOM; // default
+	private double removeOrderBias = .5; // default
 	private Pair[] operations;
 	private long start;
 	private long end;
 	private Random myRandom;
-	
-	public enum RemoveOrder {
-		RANDOM(0),
-		FIRST(1),
-		LAST(2);
-		
-		private int val;
-		private RemoveOrder(int val) {
-			this.val = val;
-		}
-		
-		public int i() {
-			return val;
-		}
-		
-		public static RemoveOrder get(int i) {
-			if(i == 2) return LAST;
-			if(i == 1) return FIRST;
-			if(i == 0) return RANDOM;
-			
-			double d = Math.random();
-			if(d > .8) return FIRST;
-			if(d > .5) return LAST;
-			else return RANDOM;
-		}
-	}
 	
 	public PixelOperationsList(int maxSize) {
 		operations = new Pair[maxSize*2];// bigger in case of threading issues
@@ -50,16 +26,12 @@ public class PixelOperationsList {
 		return (int)(i % operations.length);
 	}
 	
-	public synchronized void setRemoveOrder(RemoveOrder removeOrder) {
-		this.removeOrder = removeOrder;
+	public synchronized void setRemoveOrderBias(double removeOrder) {
+		this.removeOrderBias = removeOrder;
 	}
 	
-	public synchronized void setRemoveOrder(int removeOrder) {
-		this.removeOrder = RemoveOrder.get(removeOrder);
-	}
-	
-	public RemoveOrder getRemoveOrder() {
-		return removeOrder;
+	public double getRemoveOrderBias() {
+		return removeOrderBias;
 	}
 	
 	public synchronized boolean hasPoint() {
@@ -77,23 +49,11 @@ public class PixelOperationsList {
 	public synchronized Pair getPoint() {
 		if(!hasPoint()) return null;
 		Pair retval = null;
-		switch(removeOrder) {
-		case LAST:
-			retval = operations[wrap(--end)];
-			operations[wrap(end)] = null; // let the GC do it's work
-			return retval;
-		case RANDOM:
-			int i = wrap(start + myRandom.nextInt(length()));
-			retval = operations[i];
-			operations[i] = operations[wrap(--end)];
-			operations[wrap(end)] = null; // let the GC do it's work
-			return retval;
-		case FIRST:
-			retval = operations[wrap(start)];
-			operations[wrap(start++)] = null; // let the GC do it's work
-			return retval;
-		default:
-			throw new InternalError(); // missing case in swtich
-		}
+		double removePoint = removeOrderBias==0? 0: pow(myRandom.nextDouble(), log(removeOrderBias)/log(.5));
+		int i = wrap(start + (int)(removePoint*length()));
+		retval = operations[i];
+		operations[i] = operations[wrap(--end)];
+		operations[wrap(end)] = null; // let the GC do it's work
+		return retval;
 	}
 }
