@@ -546,11 +546,18 @@ public class Starburst extends JDesktopPane {
 	private int randomColor() {
 		return myRandom.nextInt(0xffffff+1);
 	}
+	
+	private double randomBiasedToCenter(double min, double max, double bias) {
+		double offsetFromCenter = bias==0? 0: pow(myRandom.nextDouble(), log(bias)/log(.5));
+		double pos = .5 + (myRandom.nextBoolean()? -.5: .5)*offsetFromCenter;
+		return pos * (max - min) + min;
+	}
 
 	private void seedImage(String how) {
 		if(how.equals("Points")) {
-			for (int i = 0; i < 13; i++) {
-				int x = myRandom.nextInt(canvas.getWidth()), y =  myRandom.nextInt(canvas.getHeight());
+			for(int i = 0; i < properties.getAsInt("seedMethod.points.howMany"); i++) {
+				int x = (int)randomBiasedToCenter(0, canvas.getWidth(), properties.getAsDouble("seedMethod.points.distribution"));
+				int y = (int)randomBiasedToCenter(0, canvas.getHeight(), properties.getAsDouble("seedMethod.points.distribution"));
 				operations.addPoint(x,y);
 				current[x][y] = true;
 				setPixel(x, y, randomColor());
@@ -891,8 +898,7 @@ public class Starburst extends JDesktopPane {
 			}
 		}
 
-		double a = myRandom.nextDouble();
-		a = .5 + (myRandom.nextBoolean()? -.5: .5)*pow(a, biastocenter);
+		double a = .5 + (myRandom.nextBoolean()? -.5: .5)*pow(myRandom.nextDouble(), biastocenter);
 		double val = (a*(double)(maxVal-minVal+biasFactor+1))+minVal;
 		return (int)val;
 	}
