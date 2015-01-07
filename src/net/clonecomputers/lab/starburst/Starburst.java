@@ -137,12 +137,9 @@ public class Starburst extends JDesktopPane {
 				Starburst s = new Starburst(size, gifEnc);
 				s.setupKeyAndClickListeners(window);
 				window.setContentPane(s);
-				if(gifEnc == null) {
-					VersionDependentMethodUtilities.enableFullscreen(window,biggestScreen,false);
-				} else {
-					window.setVisible(true);
-					window.setSize(size);
-				}
+				VersionDependentMethodUtilities.enableFullscreen(window,biggestScreen,false);
+				window.setVisible(true);
+				window.setSize(size);
 				s.asyncNewImage();
 			}
 		});
@@ -345,7 +342,10 @@ public class Starburst extends JDesktopPane {
 		System.out.println("newImage");
 		properties.randomize();
 		System.out.println(properties);
-		pixels = new int[canvas.getWidth()*canvas.getHeight()*canvas.getColorModel().getNumComponents()];
+		loadPixels();
+		for(int i = 0; i < pixels.length; i++) {
+			pixels[i] = 0;
+		}
 		savePixels();
 		falsifyCurrent();
 		seedImage(properties.getAsString("seedMethod"));
@@ -371,7 +371,22 @@ public class Starburst extends JDesktopPane {
 	}
 
 	private void loadPixels() {
-		pixels = canvas.getRaster().getPixels(0, 0, canvas.getWidth(), canvas.getHeight(), (int[])null);
+		System.out.println(Runtime.getRuntime().freeMemory());
+		if(Runtime.getRuntime().freeMemory() < canvas.getWidth()*canvas.getHeight() * 4) {
+			System.out.print("Freeing Memory ... ");
+			pixels = null;
+			Runtime.getRuntime().gc();
+			System.out.println(Runtime.getRuntime().freeMemory());
+		}
+		try {
+			pixels = canvas.getRaster().getPixels(0, 0, canvas.getWidth(), canvas.getHeight(), (int[])null);
+		} catch(OutOfMemoryError oom) {
+			System.out.print("Freeing Memory ... ");
+			pixels = null;
+			Runtime.getRuntime().gc();
+			loadPixels();
+			System.out.println(Runtime.getRuntime().freeMemory());
+		}
 	}
 
 	@Override public void paintComponent(Graphics g){
