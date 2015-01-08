@@ -36,6 +36,14 @@
   </organization>
 
   <build>
+  	<resources>
+	<resource>
+		<directory>src</directory>
+		<includes>
+			<include>net/clonecomputers/lab/starburst/properties/properties.json</include>
+		</includes>
+	</resource>
+</resources>
     <sourceDirectory>src/</sourceDirectory>
     <testSourceDirectory>src/</testSourceDirectory>
     <finalName>Starburst</finalName>
