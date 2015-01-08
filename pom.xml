@@ -6,6 +6,17 @@
   <version>0.0.1-SNAPSHOT</version>
   <name>Starburst</name>
   <description>Awesome image generator</description>
+  <scm>
+    <connection>https://github.com/g-rocket/Starburst.git</connection>
+    <developerConnection>https://github.com/g-rocket/Starburst.git</developerConnection>
+    <tag>HEAD</tag>
+    <url>https://github.com/g-rocket/Starburst</url>
+  </scm>
+  
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+  
   <repositories>
     <repository>
       <id>snapshots</id>
@@ -21,12 +32,22 @@
   </repositories>
 
   <organization>
-    <url>lab.clonecomputers.net</url>
+    <url>http://gavin.clonecomputers.net/starburst.html</url>
   </organization>
 
   <build>
     <sourceDirectory>src/</sourceDirectory>
-    <testSourceDirectory>test/</testSourceDirectory>
+    <testSourceDirectory>src/</testSourceDirectory>
+    <finalName>Starburst</finalName>
+    <defaultGoal>clean compile assembly:single</defaultGoal>
+    <resources>
+      <resource>
+        <directory>src/</directory>
+        <includes>
+          <include>**/*.json</include>
+        </includes>
+      </resource>
+    </resources>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -35,6 +56,7 @@
         <configuration>
           <source>1.6</source>
           <target>1.6</target>
+          <encoding>${project.build.sourceEncoding}</encoding>
         </configuration>
       </plugin>
       
@@ -49,6 +71,7 @@
               <goal>shade</goal>
             </goals>
             <configuration>
+              <minimizeJar>true</minimizeJar>
               <artifactSet>
                 <excludes>
                   <exclude>junit:junit</exclude>
@@ -81,7 +104,6 @@
           </execution>
         </executions>
       </plugin>
-      
     </plugins>
   </build>
   
