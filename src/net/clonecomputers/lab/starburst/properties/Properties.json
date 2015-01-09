@@ -33,7 +33,7 @@
 						"range": [0, 1],
 						"random": {
 							"type": "biased",
-							"bias": 0.02
+							"bias": 0.00333
 						},
 						"recommended": 0.00333
 					}
