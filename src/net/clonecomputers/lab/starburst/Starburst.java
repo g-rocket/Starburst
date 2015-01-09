@@ -39,8 +39,6 @@ public class Starburst extends JDesktopPane {
 
 	public static void main(final String[] args) throws InterruptedException, InvocationTargetException {
 		SwingUtilities.invokeAndWait(new Runnable(){
-			private boolean makingGif;
-
 			@Override public void run(){
 				GraphicsDevice[] screens = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
 				GraphicsDevice biggestScreen = null;
