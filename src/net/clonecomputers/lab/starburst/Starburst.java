@@ -570,11 +570,11 @@ public class Starburst extends JDesktopPane {
 	private void seedImage(String how) {
 		if(how.equals("Points")) {
 			for(int i = 0; i < properties.getAsInt("seedMethod.points.howMany"); i++) {
-				int x = (int)randomBiasedToCenter(0, canvas.getWidth(), properties.getAsDouble("seedMethod.points.distribution"));
-				int y = (int)randomBiasedToCenter(0, canvas.getHeight(), properties.getAsDouble("seedMethod.points.distribution"));
-				operations.addPoint(x,y);
-				current[x][y] = true;
-				setPixel(x, y, randomColor());
+				Point p = randomRadialBiasedPoint(properties.getAsDouble("seedMethod.points.distribution"),
+						canvas.getWidth(), canvas.getHeight());
+				operations.addPoint(p.x, p.y);
+				current[p.x][p.y] = true;
+				setPixel(p.x, p.y, randomColor());
 			}
 		} else if(how.equals("Lines")) {
 			int numberOfLines = (int)(properties.getAsDouble("seedMethod.lines.distribution.density") * 
@@ -587,6 +587,11 @@ public class Starburst extends JDesktopPane {
 		} else {
 			throw new IllegalArgumentException("Invalid seed method: "+how);
 		}
+	}
+
+	private Point randomRadialBiasedPoint(double bias, int width, int height) {
+		//FIXME: make it actually work
+		return new Point((int)randomBiasedToCenter(0, width, bias), (int)randomBiasedToCenter(0, height, bias));
 	}
 
 	private void generateLine(String colorScheme) {
