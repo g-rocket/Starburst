@@ -9,15 +9,18 @@ import javax.swing.event.*;
 
 import net.clonecomputers.lab.starburst.properties.random.*;
 
+import com.google.common.reflect.*;
 import com.google.gson.*;
 
 public abstract class AbstractNumberProperty<T extends Number> extends AbstractProperty<T> {
+	private final TypeToken<T> type = new TypeToken<T>(getClass()){};
 	protected final Randomizer<T> r;
 	protected double min;
 	protected double max;
 	protected JTextField textBox;
 	protected JSlider slider;
-	
+
+	@SuppressWarnings("unchecked")
 	public AbstractNumberProperty(String name, String category, Random r, JsonObject data) {
 		super(name, category, data);
 		if(data.has("range")) {
@@ -37,6 +40,9 @@ public abstract class AbstractNumberProperty<T extends Number> extends AbstractP
 			min = Double.NEGATIVE_INFINITY;
 			max = Double.POSITIVE_INFINITY;
 		}
+		if(!Double.isInfinite(max)) max = double.class.cast(type.unwrap().getRawType().cast(max));
+		if(!Double.isInfinite(min)) min = double.class.cast(type.unwrap().getRawType().cast(min));
+		this.r = Randomizer.createRandomizer((Class<T>)type.getRawType(), r, min, max, data.get("random"));
 	}
 
 	public AbstractNumberProperty(String name, String category, double min, double max, Randomizer<T> r) {

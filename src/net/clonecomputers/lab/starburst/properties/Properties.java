@@ -249,60 +249,9 @@ public class Properties {
 			parsedProperty = new EnumProperty(name, category, values, canRandomize, r);
 			if(property.has("initialValue")) parsedProperty.setValue(property.get("initialValue").getAsString());
 		} else if(type.equalsIgnoreCase("int")) {
-			double min, max;
-			if(property.has("range")) {
-				JsonElement jmin = property.get("range").getAsJsonArray().get(0);
-				JsonElement jmax = property.get("range").getAsJsonArray().get(1);
-				if(jmin.getAsJsonPrimitive().isString() && jmin.getAsString().equalsIgnoreCase("-Infinity")) {
-					min = Double.NEGATIVE_INFINITY;
-				} else {
-					min = jmin.getAsInt();
-				}
-				if(jmax.getAsJsonPrimitive().isString() && jmax.getAsString().equalsIgnoreCase("Infinity")) {
-					max = Double.POSITIVE_INFINITY;
-				} else {
-					max = jmax.getAsInt();
-				}
-			} else {
-				min = Double.NEGATIVE_INFINITY;
-				max = Double.POSITIVE_INFINITY;
-			}
-			int smin, smax; // for the slider
-			if(property.has("slider") && property.get("slider").isJsonArray()) {
-				smin = property.get("slider").getAsJsonArray().get(0).getAsInt();
-				smax = property.get("slider").getAsJsonArray().get(1).getAsInt();
-			} else if(!property.get("slider").getAsBoolean()){
-				smin = 1;
-				smax = 1;
-			} else {
-				smin = 0;
-				smax = 0;
-			}
-			Randomizer<Integer> rand = Randomizer.createRandomizer(Integer.class, r, min, max, property.get("random"));
-			parsedProperty = new IntProperty(name, category, min, max, smin, smax, rand);
-			if(property.has("initialValue")) parsedProperty.setValue(property.get("initialValue").getAsInt());
+			parsedProperty = new IntProperty(name, category, r, property);
 		} else if(type.equalsIgnoreCase("double")) {
-			double min, max;
-			if(property.has("range")) {
-				JsonElement jmin = property.get("range").getAsJsonArray().get(0);
-				JsonElement jmax = property.get("range").getAsJsonArray().get(1);
-				if(jmin.getAsJsonPrimitive().isString() && jmin.getAsString().equalsIgnoreCase("-Infinity")) {
-					min = Double.NEGATIVE_INFINITY;
-				} else {
-					min = jmin.getAsDouble();
-				}
-				if(jmax.getAsJsonPrimitive().isString() && jmax.getAsString().equalsIgnoreCase("Infinity")) {
-					max = Double.POSITIVE_INFINITY;
-				} else {
-					max = jmax.getAsDouble();
-				}
-			} else {
-				min = Double.NEGATIVE_INFINITY;
-				max = Double.POSITIVE_INFINITY;
-			}
-			Randomizer<Double> rand = Randomizer.createRandomizer(Double.class, r, min, max, property.get("random"));
-			parsedProperty = new DoubleProperty(name, category, min, max, rand);
-			if(property.has("initialValue")) parsedProperty.setValue(property.get("initialValue").getAsDouble());
+			parsedProperty = new DoubleProperty(name, category, r, property);
 		} else if(type.equalsIgnoreCase("Color")) {
 			parsedProperty = new ColorProperty(name, category, canRandomize, r);
 			if(property.has("initialValue")) {

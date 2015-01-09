@@ -2,11 +2,22 @@ package net.clonecomputers.lab.starburst.properties;
 
 import static java.lang.Double.*;
 import static java.lang.Math.*;
+
+import java.util.*;
+
+import com.google.gson.*;
+
 import net.clonecomputers.lab.starburst.properties.random.*;
 
 public class DoubleProperty extends AbstractNumberProperty<Double> {
 	private final int precision = 10000;
 	private final double sliderPower = -1.5;
+	
+	public DoubleProperty(String name, String category, Random r, JsonObject data) {
+		super(name, category, r, data);
+		finishConstruction();
+		if(data.has("initialValue")) setValue(data.get("initialValue").getAsDouble());
+	}
 	
 	public DoubleProperty(String name, String category, double min, double max, Randomizer<Double> r) {
 		super(name, category, min, max, r);
