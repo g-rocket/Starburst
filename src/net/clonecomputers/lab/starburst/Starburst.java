@@ -590,8 +590,14 @@ public class Starburst extends JDesktopPane {
 	}
 
 	private Point randomRadialBiasedPoint(double bias, int width, int height) {
-		//FIXME: make it actually work
-		return new Point((int)randomBiasedToCenter(0, width, bias), (int)randomBiasedToCenter(0, height, bias));
+		Point p = new Point(-1, -1); // intentionally invalid
+		while(p.x < 0 || p.y < 0 || p.x >= width || p.y >= height) { // keep trying until valid
+			double angle = myRandom.nextDouble() * 2*PI;
+			double radiasBais = bias==0? 0: pow(myRandom.nextDouble(), log(bias)/log(.5));
+			double radius = radiasBais * sqrt(width*width + height*height)/2; // maximum possible, may not be valid
+			p = new Point((int)(radius*cos(angle)) + width/2, (int)(radius*sin(angle)) + height/2);
+		}
+		return p;
 	}
 
 	private void generateLine(String colorScheme) {
