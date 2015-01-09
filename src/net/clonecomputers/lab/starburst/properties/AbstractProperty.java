@@ -6,6 +6,7 @@ import java.awt.event.*;
 import javax.swing.*;
 
 import com.google.common.reflect.*;
+import com.google.gson.*;
 
 public abstract class AbstractProperty<T> extends AbstractPropertyTreeNode implements Property<T> {
 	protected T value;
@@ -15,6 +16,15 @@ public abstract class AbstractProperty<T> extends AbstractPropertyTreeNode imple
 	protected final TypeToken<T> type = new TypeToken<T>(getClass()){};
 	
 	protected JCheckBox shouldRandomizeCheckBox;
+	
+	public AbstractProperty(String name, String category, JsonObject data) {
+		super(name, category);
+		canRandomize = 
+				!(data.has("randomize") &&
+				data.get("randomize").isJsonPrimitive() &&
+				data.get("randomize").getAsJsonPrimitive().isBoolean() &&
+				!data.get("randomize").getAsBoolean());
+	}
 	
 	public AbstractProperty(String name, String category, boolean canRandomize) {
 		super(name, category);

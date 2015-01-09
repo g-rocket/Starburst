@@ -117,7 +117,9 @@
 	},
 	"Prevent Overflows": {
 		"category": "Pixel generation",
-		"type": "boolean"
+		"type": "boolean",
+		"random": false,
+		"initialValue": true
 	},
 	"Finalization Method": {
 		"type": "enum",

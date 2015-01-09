@@ -2,11 +2,14 @@ package net.clonecomputers.lab.starburst.properties;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.util.*;
 
 import javax.swing.*;
 import javax.swing.event.*;
 
 import net.clonecomputers.lab.starburst.properties.random.*;
+
+import com.google.gson.*;
 
 public abstract class AbstractNumberProperty<T extends Number> extends AbstractProperty<T> {
 	protected final Randomizer<T> r;
@@ -14,6 +17,27 @@ public abstract class AbstractNumberProperty<T extends Number> extends AbstractP
 	protected double max;
 	protected JTextField textBox;
 	protected JSlider slider;
+	
+	public AbstractNumberProperty(String name, String category, Random r, JsonObject data) {
+		super(name, category, data);
+		if(data.has("range")) {
+			JsonElement jmin = data.get("range").getAsJsonArray().get(0);
+			JsonElement jmax = data.get("range").getAsJsonArray().get(1);
+			if(jmin.getAsJsonPrimitive().isString() && jmin.getAsString().equalsIgnoreCase("-Infinity")) {
+				min = Double.NEGATIVE_INFINITY;
+			} else {
+				min = jmin.getAsDouble();
+			}
+			if(jmax.getAsJsonPrimitive().isString() && jmax.getAsString().equalsIgnoreCase("Infinity")) {
+				max = Double.POSITIVE_INFINITY;
+			} else {
+				max = jmax.getAsDouble();
+			}
+		} else {
+			min = Double.NEGATIVE_INFINITY;
+			max = Double.POSITIVE_INFINITY;
+		}
+	}
 
 	public AbstractNumberProperty(String name, String category, double min, double max, Randomizer<T> r) {
 		super(name, category, r.canRandomize());
