@@ -12,7 +12,7 @@ public class PixelOperationsList {
 	private Random myRandom;
 	
 	public PixelOperationsList(int maxSize) {
-		operations = new Pair[maxSize*2];// bigger in case of threading issues
+		operations = new Pair[maxSize + 5];// bigger in case of threading issues
 		start = 0;
 		end = 0;
 		myRandom = new Random();
@@ -50,10 +50,10 @@ public class PixelOperationsList {
 		if(!hasPoint()) return null;
 		Pair retval = null;
 		double removePoint = removeOrderBias==0? 0: pow(myRandom.nextDouble(), log(removeOrderBias)/log(.5));
-		int i = wrap(start + (int)(removePoint*length()));
+		int i = wrap(start + (int)(removePoint*(length() - 2)+1));
 		retval = operations[i];
-		operations[i] = operations[wrap(--end)];
-		operations[wrap(end)] = null; // let the GC do it's work
+		operations[i] = operations[wrap(removePoint < .5? start++: --end)];
+		operations[wrap(removePoint < .5? start: end)] = null; // let the GC do it's work
 		return retval;
 	}
 }

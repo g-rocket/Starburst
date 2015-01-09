@@ -342,12 +342,11 @@ public class Starburst extends JDesktopPane {
 		System.out.println("newImage");
 		properties.randomize();
 		System.out.println(properties);
-		loadPixels();
-		for(int i = 0; i < pixels.length; i++) {
-			pixels[i] = 0;
-		}
+		//loadPixels();
+		pixels = new int[canvas.getWidth() * canvas.getHeight() * canvas.getRaster().getNumBands()];
 		savePixels();
 		falsifyCurrent();
+		operations.setRemoveOrderBias(properties.getAsDouble("removeOrderBias"));
 		seedImage(properties.getAsString("seedMethod"));
 		if(gifEnc != null) {
 			gifEnc.setDelay(500);
