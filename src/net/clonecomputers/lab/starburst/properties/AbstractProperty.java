@@ -93,10 +93,11 @@ public abstract class AbstractProperty<T> extends AbstractPropertyTreeNode imple
 	
 	@Override
 	protected JComponent createChangePanel() {
-		JComponent primaryPanel = new JPanel(new BorderLayout());
+		final JComponent primaryPanel = new JPanel(new BorderLayout());
 		JComponent propertyPanel = new JPanel(new BorderLayout());
 		JComponent nameAndRandomizePanel = new JPanel(new BorderLayout());
-		nameAndRandomizePanel.add(new JLabel(name), BorderLayout.CENTER);
+		JComponent propertySetterPanel = createPropertyPanel();
+		JComponent centerPanel = createCenterPanel();
 		if(canRandomize) {
 			shouldRandomizeCheckBox = new JCheckBox();
 			shouldRandomizeCheckBox.addActionListener(new ActionListener() {
@@ -106,12 +107,40 @@ public abstract class AbstractProperty<T> extends AbstractPropertyTreeNode imple
 				}
 			});
 			nameAndRandomizePanel.add(shouldRandomizeCheckBox, BorderLayout.LINE_START);
+			final MouseListener unrandomizer = new MouseAdapter() {
+				@Override
+				public void mousePressed(MouseEvent e) {
+					if(e.getComponent().contains(e.getPoint())) {
+						shouldRandomizeCheckBox.setSelected(false);
+					} else {
+						System.out.println(e.getPoint()+"Is out of bounds");
+					}
+				}
+			};
+			ContainerListener mouseListenerAdder = new ContainerAdapter() {
+				@Override
+				public void componentAdded(ContainerEvent e) {
+					addListeners(e.getChild());
+				}
+				
+				public void addListeners(Component c) {
+					c.addMouseListener(unrandomizer);
+					if(c instanceof Container){
+						((Container) c).addContainerListener(this);
+						for(Component child: ((Container)c).getComponents()) {
+							addListeners(child);
+						}
+					}
+				}
+			};
+			primaryPanel.addMouseListener(unrandomizer);
+			primaryPanel.addContainerListener(mouseListenerAdder);
 		}
-		propertyPanel.add(nameAndRandomizePanel, BorderLayout.LINE_START);
-		propertyPanel.add(createPropertyPanel(), BorderLayout.LINE_END);
-		primaryPanel.add(propertyPanel, BorderLayout.PAGE_START);
-		JComponent centerPanel = createCenterPanel();
 		if(centerPanel != null) primaryPanel.add(centerPanel, BorderLayout.CENTER);
+		nameAndRandomizePanel.add(new JLabel(name), BorderLayout.CENTER);
+		propertyPanel.add(nameAndRandomizePanel, BorderLayout.LINE_START);
+		propertyPanel.add(propertySetterPanel, BorderLayout.LINE_END);
+		primaryPanel.add(propertyPanel, BorderLayout.PAGE_START);
 		return primaryPanel;
 	}
 	

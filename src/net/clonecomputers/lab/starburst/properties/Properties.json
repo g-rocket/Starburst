@@ -12,6 +12,9 @@
 				"Distribution": {
 					"type": "double",
 					"range": [0, 1]
+				},
+				"Color": {
+					"type": "color"
 				}
 			},
 			"Lines": {
@@ -31,9 +34,14 @@
 						"type": "double",
 						"formula": "number of lines = density * (total area / area of 1 line) = density * width * height / length",
 						"range": [0, 1],
+						"slider": {
+							"type": "biased",
+							"range": [0,1],
+							"bias": 0.02
+						},
 						"random": {
 							"type": "biased",
-							"bias": 0.02
+							"bias": 0.002
 						},
 						"recommended": 0.00333
 					}
