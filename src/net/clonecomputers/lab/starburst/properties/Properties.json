@@ -37,7 +37,7 @@
 						"slider": {
 							"type": "biased",
 							"range": [0,1],
-							"bias": 0.02
+							"bias": 0.00333
 						},
 						"random": {
 							"type": "biased",

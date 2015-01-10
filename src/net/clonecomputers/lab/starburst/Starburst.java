@@ -342,12 +342,11 @@ public class Starburst extends JDesktopPane {
 		System.out.println("newImage");
 		properties.randomize();
 		System.out.println(properties);
-		loadPixels();
-		for(int i = 0; i < pixels.length; i++) {
-			pixels[i] = 0;
-		}
+		//loadPixels();
+		pixels = new int[canvas.getWidth() * canvas.getHeight() * canvas.getRaster().getNumBands()];
 		savePixels();
 		falsifyCurrent();
+		operations.setRemoveOrderBias(properties.getAsDouble("removeOrderBias"));
 		seedImage(properties.getAsString("seedMethod"));
 		if(gifEnc != null) {
 			gifEnc.setDelay(500);
@@ -571,11 +570,11 @@ public class Starburst extends JDesktopPane {
 	private void seedImage(String how) {
 		if(how.equals("Points")) {
 			for(int i = 0; i < properties.getAsInt("seedMethod.points.howMany"); i++) {
-				int x = (int)randomBiasedToCenter(0, canvas.getWidth(), properties.getAsDouble("seedMethod.points.distribution"));
-				int y = (int)randomBiasedToCenter(0, canvas.getHeight(), properties.getAsDouble("seedMethod.points.distribution"));
-				operations.addPoint(x,y);
-				current[x][y] = true;
-				setPixel(x, y, randomColor());
+				Point p = randomRadialBiasedPoint(properties.getAsDouble("seedMethod.points.distribution"),
+						canvas.getWidth(), canvas.getHeight());
+				operations.addPoint(p.x, p.y);
+				current[p.x][p.y] = true;
+				setPixel(p.x, p.y, randomColor());
 			}
 		} else if(how.equals("Lines")) {
 			int numberOfLines = (int)(properties.getAsDouble("seedMethod.lines.distribution.density") * 
@@ -588,6 +587,17 @@ public class Starburst extends JDesktopPane {
 		} else {
 			throw new IllegalArgumentException("Invalid seed method: "+how);
 		}
+	}
+
+	private Point randomRadialBiasedPoint(double bias, int width, int height) {
+		Point p = new Point(-1, -1); // intentionally invalid
+		while(p.x < 0 || p.y < 0 || p.x >= width || p.y >= height) { // keep trying until valid
+			double angle = myRandom.nextDouble() * 2*PI;
+			double radiasBais = bias==0? 0: pow(myRandom.nextDouble(), log(bias)/log(.5));
+			double radius = radiasBais * sqrt(width*width + height*height)/2; // maximum possible, may not be valid
+			p = new Point((int)(radius*cos(angle)) + width/2, (int)(radius*sin(angle)) + height/2);
+		}
+		return p;
 	}
 
 	private void generateLine(String colorScheme) {
