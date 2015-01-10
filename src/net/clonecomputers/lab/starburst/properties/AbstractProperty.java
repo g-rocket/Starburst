@@ -110,8 +110,10 @@ public abstract class AbstractProperty<T> extends AbstractPropertyTreeNode imple
 			final MouseListener unrandomizer = new MouseAdapter() {
 				@Override
 				public void mousePressed(MouseEvent e) {
-					if(e.getComponent().contains(e.getPoint())) {
+					if(e.getComponent().contains(e.getPoint()) && 
+							!shouldRandomizeCheckBox.contains(e.getPoint())) {
 						shouldRandomizeCheckBox.setSelected(false);
+						shouldRandomize = false;
 					} else {
 						System.out.println(e.getPoint()+"Is out of bounds");
 					}
