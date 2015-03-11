@@ -40,10 +40,13 @@ public class PixelOperationsList {
 	
 	public synchronized void addPoint(Pair p) {
 		operations[wrap(end++)] = p;
+		if(end >= start + operations.length) {
+			throw new ArrayIndexOutOfBoundsException("exceeded storage space of backing array");
+		}
 	}
 
 	public synchronized void addPoint(int x, int y) {
-		operations[wrap(end++)] = new Pair(x,y);
+		addPoint(new Pair(x,y));
 	}
 
 	public synchronized Pair getPoint() {
@@ -55,5 +58,11 @@ public class PixelOperationsList {
 		operations[i] = operations[wrap(removePoint < .5? start++: --end)];
 		operations[wrap(removePoint < .5? start: end)] = null; // let the GC do it's work
 		return retval;
+	}
+
+	public void clear() {
+		while(start < end) {
+			operations[wrap(start++)] = null;
+		}
 	}
 }
