@@ -783,6 +783,7 @@ public class Starburst extends JDesktopPane {
 		if(properties.getAsDouble("probabilityOfInclusion") < 1) {
 			finalizePixels(properties.getAsString("finalizationMethod"));
 		}
+		operations.clear();
 	}
 
 	private void randomSeedPixels() {
