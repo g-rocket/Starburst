@@ -35,7 +35,7 @@ public class Starburst extends JDesktopPane {
 	private AnimatedGifEncoder gifEnc = null;
 
 	public static final ExecutorService exec = Executors.newCachedThreadPool();
-	private static final int THREADNUM = 2;
+	private static final int THREADNUM = Runtime.getRuntime().availableProcessors();
 
 	public static void main(final String[] args) throws InterruptedException, InvocationTargetException {
 		SwingUtilities.invokeAndWait(new Runnable(){
