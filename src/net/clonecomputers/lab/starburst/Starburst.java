@@ -196,7 +196,7 @@ public class Starburst extends JDesktopPane {
 	public Starburst(int w,int h){
 		canvas = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
 		this.setPreferredSize(new Dimension(w,h));
-		operations = new PixelOperationsList(w*h);
+		operations = new PixelOperationsList(w,h);
 		properties = new Properties();
 		properties.set("size.width", w);
 		properties.set("size.height",h);
@@ -222,10 +222,10 @@ public class Starburst extends JDesktopPane {
 	}
 
 	private void saveRandomName(String outputDirectory) {
-		String filename = String.format("%s/%s %s.png",
+		String filename = String.format("%s/%s.png",
 				outputDirectory,
-				properties.toString().replace('\n', ' ').replace('.','_'),
-				randomstr(8));
+				//properties.toString().replaceAll("\\s+", "").replace('.','_'),
+				randomstr(24));
 		save(new File(filename));
 	}
 
@@ -344,7 +344,9 @@ public class Starburst extends JDesktopPane {
 		System.out.println(properties);
 		//loadPixels();
 		pixels = new int[canvas.getWidth() * canvas.getHeight() * canvas.getRaster().getNumBands()];
-		savePixels();
+		if(properties.getAsBoolean("renderDuringGeneration")) {
+			savePixels();
+		}
 		falsifyCurrent();
 		operations.setRemoveOrderBias(properties.getAsDouble("removeOrderBias"));
 		seedImage(properties.getAsString("seedMethod"));
@@ -471,6 +473,37 @@ public class Starburst extends JDesktopPane {
 				genMany(outputDirectory.getAbsolutePath(), Integer.parseInt(input));
 			}});
 			break;
+		case 'f':
+			JFrame window = (JFrame) SwingUtilities.getWindowAncestor(this);
+			window.setVisible(false);
+			window.dispose();
+			if(window.isUndecorated()) {
+				GraphicsDevice ourScreen = null;
+				for(GraphicsDevice gd: GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()) {
+					if(gd.getFullScreenWindow() != null && 
+							gd.getFullScreenWindow().isAncestorOf(window) || window.isAncestorOf(gd.getFullScreenWindow()) || window.equals(gd.getFullScreenWindow())) {
+						ourScreen = gd;
+						break;
+					}
+				}
+				if(ourScreen != null) ourScreen.setFullScreenWindow(null);
+				window.setUndecorated(false);
+			} else {
+				GraphicsDevice biggestScreen = null;
+				long maxPixels = Long.MIN_VALUE;
+				for(GraphicsDevice gd: GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()) {
+					long gdPixels = gd.getDisplayMode().getWidth() * gd.getDisplayMode().getHeight();
+					if(gdPixels > maxPixels) {
+						maxPixels = gdPixels;
+						biggestScreen = gd;
+					}
+				}
+				window.setUndecorated(true);
+				biggestScreen.setFullScreenWindow(window);
+			}
+			window.pack();
+			window.setVisible(true);
+			break;
 		default:
 			if(key != 27) asyncNewImage();
 		}
@@ -572,6 +605,7 @@ public class Starburst extends JDesktopPane {
 			for(int i = 0; i < properties.getAsInt("seedMethod.points.howMany"); i++) {
 				Point p = randomRadialBiasedPoint(properties.getAsDouble("seedMethod.points.distribution"),
 						canvas.getWidth(), canvas.getHeight());
+				if(current[p.x][p.y]) continue;
 				operations.addPoint(p.x, p.y);
 				current[p.x][p.y] = true;
 				setPixel(p.x, p.y, randomColor());
@@ -672,10 +706,6 @@ public class Starburst extends JDesktopPane {
 			if (colorScheme.equals("Varying")) c = color((int)r,(int)g,(int)b);
 			current[(int)x][(int)y] = true;
 			setPixel((int)x, (int)y, c);
-			if(colorScheme.equals("Varying")) {
-				canvas.setRGB((int)x, (int)y, c);
-				this.repaint((int)x, (int)y, 1, 1);
-			}
 		}
 	}
 
@@ -705,8 +735,10 @@ public class Starburst extends JDesktopPane {
 		pixels[i]=red(c);
 		pixels[i+1]=green(c);
 		pixels[i+2]=blue(c);
-		canvas.setRGB((int)x, (int)y, c);
-		this.repaint((int)x, (int)y, 1, 1);
+		if(properties.getAsBoolean("renderDuringGeneration")) {
+			canvas.setRGB((int)x, (int)y, c);
+			this.repaint((int)x, (int)y, 1, 1);
+		}
 		if(gifEnc != null) {
 			BufferedImage frameImage = new BufferedImage(canvas.getWidth(), canvas.getHeight(), BufferedImage.TYPE_INT_RGB);
 			Graphics g = frameImage.getGraphics();

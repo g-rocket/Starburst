@@ -151,5 +151,12 @@
 			"random": false,
 			"slider": false
 		}
+	},
+	"Render during generation": {
+		"category": "General",
+		"type": "boolean",
+		"saved": false,
+		"random": false,
+		"initialValue": true
 	}
 }

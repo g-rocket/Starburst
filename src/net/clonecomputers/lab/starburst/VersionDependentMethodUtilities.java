@@ -166,12 +166,12 @@ public class VersionDependentMethodUtilities {
 				}
 			});
 		}
-		FullScreenUtilities.setWindowCanFullScreen(window,true); //TODO: test compiling on non-mac
+		FullScreenUtilities.setWindowCanFullScreen(window,true);
 	}
 
 	@SuppressWarnings("restriction")
 	public static void doAppleFullscreen(JFrame window) {
-		Application.getApplication().requestToggleFullScreen(window);//TODO: compiles non-mac?
+		Application.getApplication().requestToggleFullScreen(window);
 	}
 
 	@SuppressWarnings("restriction")

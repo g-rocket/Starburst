@@ -7,12 +7,16 @@ import java.util.*;
 public class PixelOperationsList {
 	private double removeOrderBias = .5; // default
 	private Pair[] operations;
+	private boolean[] scheduled; // to prevent duplicates
+	private int width;
 	private long start;
 	private long end;
 	private Random myRandom;
 	
-	public PixelOperationsList(int maxSize) {
-		operations = new Pair[maxSize + 5];// bigger in case of threading issues
+	public PixelOperationsList(int width, int height) {
+		operations = new Pair[width*height];
+		scheduled = new boolean[width*height];
+		this.width = width;
 		start = 0;
 		end = 0;
 		myRandom = new Random();
@@ -39,6 +43,10 @@ public class PixelOperationsList {
 	}
 	
 	public synchronized void addPoint(Pair p) {
+		if(scheduled[p.x + p.y*width]) {
+			return; // duplicates are silently ignored
+		}
+		scheduled[p.x + p.y*width] = true;
 		operations[wrap(end++)] = p;
 		if(end >= start + operations.length) {
 			throw new ArrayIndexOutOfBoundsException("exceeded storage space of backing array");
@@ -53,15 +61,19 @@ public class PixelOperationsList {
 		if(!hasPoint()) return null;
 		Pair retval = null;
 		double removePoint = removeOrderBias==0? 0: pow(myRandom.nextDouble(), log(removeOrderBias)/log(.5));
-		int i = wrap(start + (int)(removePoint*(length() - 2)+1));
-		retval = operations[i];
-		operations[i] = operations[wrap(removePoint < .5? start++: --end)];
-		operations[wrap(removePoint < .5? start: end)] = null; // let the GC do it's work
+		int removeIndex = wrap(start + (int)(removePoint * length()));
+		retval = operations[removeIndex];
+		int replaceIndex = wrap(removePoint < .5? start++: --end);
+		operations[removeIndex] = operations[replaceIndex];
+		operations[replaceIndex] = null; // let the GC do it's work
+		scheduled[retval.x + retval.y*width] = false;
 		return retval;
 	}
 
-	public void clear() {
+	public synchronized void clear() {
 		while(start < end) {
+			Pair toRemove = operations[wrap(start++)];
+			scheduled[toRemove.x + toRemove.y*width] = false;
 			operations[wrap(start++)] = null;
 		}
 	}

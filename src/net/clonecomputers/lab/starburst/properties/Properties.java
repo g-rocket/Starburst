@@ -232,10 +232,10 @@ public class Properties {
 			return new PropertyGroup(name, category, parseSubproperties(property, path, category));
 		}
 		boolean canRandomize = 
-				!(property.has("randomize") &&
-				property.get("randomize").isJsonPrimitive() &&
-				property.get("randomize").getAsJsonPrimitive().isBoolean() &&
-				!property.get("randomize").getAsBoolean());
+				!(property.has("random") &&
+				property.get("random").isJsonPrimitive() &&
+				property.get("random").getAsJsonPrimitive().isBoolean() &&
+				!property.get("random").getAsBoolean());
 		String type = property.get("type").getAsString();
 		categories.add(category);
 		if(type.equalsIgnoreCase("enum")) {
@@ -369,11 +369,12 @@ public class Properties {
 	}
 
 	public void exportToPNG(PngMetadata meta) {
-		//TODO: make this do something
+		meta.setText("net.clonecomputers.lab.Starburst.propertyTree", rootProperties.toString(), true, true);
+		meta.setText("net.clonecomputers.lab.Starburst.properties", allProperties.toString(), true, true);
 	}
 
 	public void importFromPNG(List<PngChunk> chunks) {
-		//TODO: make this do something
+		throw new UnsupportedOperationException("Not implemented yet"); //TODO: implement me
 	}
 
 	public void randomize() {
