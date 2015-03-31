@@ -1,9 +1,13 @@
-package net.clonecomputers.lab.starburst.properties;
+package net.clonecomputers.lab.starburst.properties.types;
 
 import java.awt.*;
 import java.util.*;
 
 import javax.swing.*;
+
+import net.clonecomputers.lab.starburst.properties.*;
+
+import com.google.gson.*;
 
 public class ColorProperty extends AbstractProperty<Color> {
 	private final Random r;
@@ -48,5 +52,28 @@ public class ColorProperty extends AbstractProperty<Color> {
 	@Override
 	protected JComponent createCenterPanel() {
 		return null;
+	}
+
+	@Override
+	public JsonObject exportToJson() {
+		JsonObject json = super.exportToJson();
+		JsonObject color = new JsonObject();
+		color.addProperty("red", value.getRed());
+		color.addProperty("green", value.getGreen());
+		color.addProperty("blue", value.getBlue());
+		color.addProperty("alpha", value.getAlpha());
+		json.add("value", color);
+		return json;
+	}
+
+	@Override
+	public void importFromJson(JsonElement json) {
+		super.importFromJson(json);
+		JsonObject color = json.getAsJsonObject().getAsJsonObject("value");
+		int red = color.get("red").getAsInt();
+		int green = color.get("green").getAsInt();
+		int blue = color.get("blue").getAsInt();
+		int alpha = color.get("alpha").getAsInt();
+		setValue(new Color(red, green, blue, alpha));
 	}
 }

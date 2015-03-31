@@ -1,8 +1,12 @@
-package net.clonecomputers.lab.starburst.properties;
+package net.clonecomputers.lab.starburst.properties.types;
 
 import java.util.*;
 
 import javax.swing.*;
+
+import net.clonecomputers.lab.starburst.properties.*;
+
+import com.google.gson.*;
 
 public class BooleanProperty extends AbstractProperty<Boolean> {
 	private final Random r;
@@ -48,4 +52,16 @@ public class BooleanProperty extends AbstractProperty<Boolean> {
 		return null;
 	}
 
+	@Override
+	public JsonObject exportToJson() {
+		JsonObject json = super.exportToJson();
+		json.addProperty("value", value);
+		return json;
+	}
+
+	@Override
+	public void importFromJson(JsonElement json) {
+		super.importFromJson(json);
+		setValue(json.getAsJsonObject().get("value").getAsBoolean());
+	}
 }

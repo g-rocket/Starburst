@@ -11,6 +11,7 @@ import javax.swing.*;
 
 import net.clonecomputers.lab.starburst.*;
 import net.clonecomputers.lab.starburst.properties.random.*;
+import net.clonecomputers.lab.starburst.properties.types.*;
 import ar.com.hjg.pngj.chunks.*;
 
 import com.google.gson.*;
@@ -369,12 +370,32 @@ public class Properties {
 	}
 
 	public void exportToPNG(PngMetadata meta) {
-		meta.setText("net.clonecomputers.lab.Starburst.propertyTree", rootProperties.toString(), true, true);
-		meta.setText("net.clonecomputers.lab.Starburst.properties", allProperties.toString(), true, true);
+		meta.setText("net.clonecomputers.lab.starubrst.properties", exportToJson().toString(), true, true);
 	}
 
 	public void importFromPNG(List<PngChunk> chunks) {
-		throw new UnsupportedOperationException("Not implemented yet"); //TODO: implement me
+		for(PngChunk c: chunks) {
+			if (!ChunkHelper.isText(c)) continue;
+			PngChunkTextVar ct = (PngChunkTextVar) c;
+			String chunkKey = ct.getKey();
+			if(!chunkKey.equals("net.clonecomputers.lab.starubrst.properties")) continue;
+			String val = ct.getVal();
+			importFromJson(new JsonParser().parse(val));
+		}
+	}
+	
+	public JsonElement exportToJson() {
+		JsonObject json = new JsonObject();
+		for(Map.Entry<String, Property<?>> p: allProperties.entrySet()) {
+			json.add(p.getKey(), p.getValue().exportToJson());
+		}
+		return json;
+	}
+	
+	public void importFromJson(JsonElement json) {
+		for(Map.Entry<String, JsonElement> p: json.getAsJsonObject().entrySet()){
+			allProperties.get(p.getKey()).importFromJson(p.getValue());
+		}
 	}
 
 	public void randomize() {

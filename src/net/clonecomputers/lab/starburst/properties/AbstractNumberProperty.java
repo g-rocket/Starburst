@@ -8,6 +8,8 @@ import javax.swing.event.*;
 
 import net.clonecomputers.lab.starburst.properties.random.*;
 
+import com.google.gson.*;
+
 public abstract class AbstractNumberProperty<T extends Number> extends AbstractProperty<T> {
 	protected final Randomizer<T> r;
 	protected double min;
@@ -119,5 +121,51 @@ public abstract class AbstractNumberProperty<T extends Number> extends AbstractP
 	@Override
 	public JComponent createCenterPanel() {
 		return null;
+	}
+	
+	protected static JsonPrimitive doubleToJson(double value) {
+		if(Double.isInfinite(value)) {
+			if(value > 0) {
+				return new JsonPrimitive("Inf");
+			} else {
+				return new JsonPrimitive("-Inf");
+			}
+		} else if(Double.isNaN(value)) {
+			return new JsonPrimitive("NaN");
+		} else {
+			return new JsonPrimitive(value);
+		}
+	}
+	
+	protected static double jsonToDouble(JsonPrimitive json) {
+		if(json.isString()) {
+			String value = json.getAsString();
+			if(value.equals("Inf")) {
+				return Double.POSITIVE_INFINITY;
+			} else if(value.equals("-Inf")) {
+				return Double.NEGATIVE_INFINITY;
+			} else if(value.equals("NaN")) {
+				return Double.NaN;
+			} else {
+				throw new IllegalArgumentException(json+" is not a valid Double value");
+			}
+		} else {
+			return json.getAsDouble();
+		}
+	}
+	
+	@Override
+	public JsonObject exportToJson() {
+		JsonObject json = super.exportToJson();
+		json.add("min", doubleToJson(min));
+		json.add("max", doubleToJson(max));
+		return json;
+	}
+	
+	@Override
+	public void importFromJson(JsonElement json) {
+		super.importFromJson(json);
+		min = jsonToDouble(json.getAsJsonObject().get("min").getAsJsonPrimitive());
+		max = jsonToDouble(json.getAsJsonObject().get("max").getAsJsonPrimitive());
 	}
 }

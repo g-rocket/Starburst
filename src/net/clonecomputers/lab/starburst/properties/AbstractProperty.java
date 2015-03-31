@@ -6,6 +6,7 @@ import java.awt.event.*;
 import javax.swing.*;
 
 import com.google.common.reflect.*;
+import com.google.gson.*;
 
 public abstract class AbstractProperty<T> extends AbstractPropertyTreeNode implements Property<T> {
 	protected T value;
@@ -148,4 +149,20 @@ public abstract class AbstractProperty<T> extends AbstractPropertyTreeNode imple
 	
 	protected abstract JComponent createPropertyPanel();
 	protected abstract JComponent createCenterPanel();
+	
+	@Override
+	public JsonObject exportToJson() {
+		JsonObject json = new JsonObject();
+		if(canRandomize) {
+			json.addProperty("shouldRandomize", shouldRandomize);
+		}
+		return json;
+	}
+	
+	@Override
+	public void importFromJson(JsonElement json) {
+		if(canRandomize) {
+			setShouldRandomize(json.getAsJsonObject().get("shouldRandomize").getAsBoolean());
+		}
+	}
 }

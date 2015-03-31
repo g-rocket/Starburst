@@ -1,8 +1,11 @@
-package net.clonecomputers.lab.starburst.properties;
+package net.clonecomputers.lab.starburst.properties.types;
 
 import static java.lang.Double.*;
 import static java.lang.Math.*;
+import net.clonecomputers.lab.starburst.properties.*;
 import net.clonecomputers.lab.starburst.properties.random.*;
+
+import com.google.gson.*;
 
 public class DoubleProperty extends AbstractNumberProperty<Double> {
 	private final int precision = 10000;
@@ -76,5 +79,18 @@ public class DoubleProperty extends AbstractNumberProperty<Double> {
 		slider.setPaintTicks(false);
 		slider.setPaintLabels(false);
 		slider.setSnapToTicks(false);
+	}
+
+	@Override
+	public JsonObject exportToJson() {
+		JsonObject json = super.exportToJson();
+		json.add("value", doubleToJson(value));
+		return json;
+	}
+
+	@Override
+	public void importFromJson(JsonElement json) {
+		super.importFromJson(json);
+		setValue(jsonToDouble(json.getAsJsonObject().get("value").getAsJsonPrimitive()));
 	}
 }

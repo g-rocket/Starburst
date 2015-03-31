@@ -1,10 +1,14 @@
-package net.clonecomputers.lab.starburst.properties;
+package net.clonecomputers.lab.starburst.properties.types;
 
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
 
 import javax.swing.*;
+
+import net.clonecomputers.lab.starburst.properties.*;
+
+import com.google.gson.*;
 
 public class EnumProperty extends AbstractProperty<String> implements PropertyTree {
 	private final Random r;
@@ -162,5 +166,18 @@ public class EnumProperty extends AbstractProperty<String> implements PropertyTr
 			centerPanel.add(panelWithExtraSpace, subpropertyiesForValue.getKey());
 		}
 		return centerPanel;
+	}
+
+	@Override
+	public JsonObject exportToJson() {
+		JsonObject json = super.exportToJson();
+		json.addProperty("value", value);
+		return json;
+	}
+	
+	@Override
+	public void importFromJson(JsonElement json) {
+		super.importFromJson(json);
+		setValue(json.getAsJsonObject().get("value").getAsString());
 	}
 }
