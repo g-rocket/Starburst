@@ -35,7 +35,7 @@ public class Starburst extends JDesktopPane {
 	private AnimatedGifEncoder gifEnc = null;
 
 	public static final ExecutorService exec = Executors.newCachedThreadPool();
-	private static final int THREADNUM = Runtime.getRuntime().availableProcessors();
+	private static final int THREADNUM = Runtime.getRuntime().availableProcessors() + 1;
 
 	public static void main(final String[] args) throws InterruptedException, InvocationTargetException {
 		SwingUtilities.invokeAndWait(new Runnable(){
@@ -58,29 +58,36 @@ public class Starburst extends JDesktopPane {
 				AnimatedGifEncoder gifEnc = null;
 				int howManyNumbers = 0;
 				String[] dims = new String[2];
+				int howManyArgs = 0;
+				String[] tmp = new String[args.length];
 				for(int i = 0; i < args.length; i++) {
-					if(isInt(args[i])) dims[howManyNumbers++] = args[i];
-					args[i] = null;
+					if(isInt(args[i])) {
+						dims[howManyNumbers++] = args[i];
+					} else {
+						tmp[howManyArgs++] = args[i];
+					}
 				}
-				Arrays.sort(args);
+				String[] args2 = new String[howManyArgs];
+				System.arraycopy(tmp, 0, args, 0, howManyArgs);
+				Arrays.sort(args2);
 				switch(howManyNumbers) {
 				case 0:
 					size = new Dimension(d.getWidth(), d.getHeight());
 					break;
 				case 1:
 					size = new Dimension(
-							Integer.parseInt(args[0].split(",")[0].trim()),
-							Integer.parseInt(args[0].split(",")[1].trim()));
+							Integer.parseInt(dims[0].split(",")[0].trim()),
+							Integer.parseInt(dims[0].split(",")[1].trim()));
 					break;
 				case 2:
 					size = new Dimension(
-							Integer.parseInt(args[0].trim()),
-							Integer.parseInt(args[1].trim()));
+							Integer.parseInt(dims[0].trim()),
+							Integer.parseInt(dims[1].trim()));
 					break;
 				default:
 					throw new IllegalArgumentException("too many numbers");
 				}
-				if(Arrays.binarySearch(args,"gif") > 0) {
+				if(Arrays.binarySearch(args2,"gif") > 0) {
 					FileDialog gifFileFinder = new FileDialog((Frame)null, "Where do you want to save the gif", FileDialog.SAVE);
 					gifFileFinder.setVisible(true);
 					while(gifFileFinder.getFile() == null) Thread.yield();
@@ -100,14 +107,14 @@ public class Starburst extends JDesktopPane {
 						throw new RuntimeException(e);
 					}
 					size = new Dimension(
-							Integer.parseInt(args[1].trim()),
-							Integer.parseInt(args[2].trim()));
+							Integer.parseInt(dims[0].trim()),
+							Integer.parseInt(dims[1].trim()));
 					BufferedImage allBlack = new BufferedImage(size.width, size.height, BufferedImage.TYPE_INT_ARGB);
 					Graphics g = allBlack.getGraphics();
 					g.drawRect(0, 0, allBlack.getWidth(), allBlack.getHeight());
 					gifEnc.addFrame(allBlack);
 				}
-				if(Arrays.binarySearch(args, "inputdims") > 0) {
+				if(Arrays.binarySearch(args2, "inputdims") > 0) {
 					System.out.println("Input dimensions");
 					BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 					String arg0;
