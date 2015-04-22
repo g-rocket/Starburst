@@ -19,8 +19,6 @@ import net.clonecomputers.lab.starburst.properties.Properties;
 import ar.com.hjg.pngj.*;
 import ar.com.hjg.pngj.chunks.*;
 
-import com.madgag.gif.fmsware.*;
-
 public class Starburst extends JDesktopPane {
 	private Random myRandom = new Random();
 
@@ -32,15 +30,11 @@ public class Starburst extends JDesktopPane {
 	private Pair centerPair;
 	private Properties properties = new Properties();
 
-	private AnimatedGifEncoder gifEnc = null;
-
 	public static final ExecutorService exec = Executors.newCachedThreadPool();
 	private static final int THREADNUM = Runtime.getRuntime().availableProcessors();
 
 	public static void main(final String[] args) throws InterruptedException, InvocationTargetException {
 		SwingUtilities.invokeAndWait(new Runnable(){
-			private boolean makingGif;
-
 			@Override public void run(){
 				GraphicsDevice[] screens = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
 				GraphicsDevice biggestScreen = null;
@@ -55,7 +49,6 @@ public class Starburst extends JDesktopPane {
 				DisplayMode d = biggestScreen.getDisplayMode();
 				JFrame window = new JFrame();
 				Dimension size;
-				AnimatedGifEncoder gifEnc = null;
 				int howManyNumbers = 0;
 				String[] dims = new String[2];
 				for(int i = 0; i < args.length; i++) {
@@ -79,33 +72,6 @@ public class Starburst extends JDesktopPane {
 					break;
 				default:
 					throw new IllegalArgumentException("too many numbers");
-				}
-				if(Arrays.binarySearch(args,"gif") > 0) {
-					FileDialog gifFileFinder = new FileDialog((Frame)null, "Where do you want to save the gif", FileDialog.SAVE);
-					gifFileFinder.setVisible(true);
-					while(gifFileFinder.getFile() == null) Thread.yield();
-					File f = new File(gifFileFinder.getDirectory(), gifFileFinder.getFile());
-					try {
-						f.createNewFile();
-					} catch (IOException e) {
-						throw new RuntimeException(e);
-					}
-					gifEnc = new AnimatedGifEncoder();
-					gifEnc.setDispose(1);
-					gifEnc.setBackground(Color.WHITE);
-					gifEnc.setTransparent(Color.WHITE);
-					try {
-						gifEnc.start(new BufferedOutputStream(new FileOutputStream(f)));
-					} catch (FileNotFoundException e) {
-						throw new RuntimeException(e);
-					}
-					size = new Dimension(
-							Integer.parseInt(args[1].trim()),
-							Integer.parseInt(args[2].trim()));
-					BufferedImage allBlack = new BufferedImage(size.width, size.height, BufferedImage.TYPE_INT_ARGB);
-					Graphics g = allBlack.getGraphics();
-					g.drawRect(0, 0, allBlack.getWidth(), allBlack.getHeight());
-					gifEnc.addFrame(allBlack);
 				}
 				if(Arrays.binarySearch(args, "inputdims") > 0) {
 					System.out.println("Input dimensions");
@@ -134,7 +100,7 @@ public class Starburst extends JDesktopPane {
 						throw new IllegalArgumentException("Invalid dimensions");
 					}
 				}
-				Starburst s = new Starburst(size, gifEnc);
+				Starburst s = new Starburst(size);
 				s.setupKeyAndClickListeners(window);
 				window.setContentPane(s);
 				VersionDependentMethodUtilities.enableFullscreen(window,biggestScreen,false);
@@ -206,11 +172,6 @@ public class Starburst extends JDesktopPane {
 
 	public Starburst(Dimension size) {
 		this(size.width, size.height);
-	}
-
-	public Starburst(Dimension size, AnimatedGifEncoder gifEnc) {
-		this(size.width, size.height);
-		this.gifEnc = gifEnc;
 	}
 
 	private void genMany(String outputDirectory, int howMany) {
@@ -350,9 +311,6 @@ public class Starburst extends JDesktopPane {
 		falsifyCurrent();
 		operations.setRemoveOrderBias(properties.getAsDouble("removeOrderBias"));
 		seedImage(properties.getAsString("seedMethod"));
-		if(gifEnc != null) {
-			gifEnc.setDelay(500);
-		}
 		System.out.println("done seeding");
 		fillOperations();
 		fillAll();
@@ -360,10 +318,6 @@ public class Starburst extends JDesktopPane {
 		savePixels();
 		System.out.println("end newImage");
 		System.out.printf("took %d millis\n",System.currentTimeMillis()-sTime);
-		if(gifEnc != null) {
-			gifEnc.finish();
-			System.exit(0);
-		}
 	}
 
 	private void savePixels() {
@@ -593,12 +547,6 @@ public class Starburst extends JDesktopPane {
 	private int randomColor() {
 		return myRandom.nextInt(0xffffff+1);
 	}
-	
-	private double randomBiasedToCenter(double min, double max, double bias) {
-		double offsetFromCenter = bias==0? 0: pow(myRandom.nextDouble(), log(bias)/log(.5));
-		double pos = .5 + (myRandom.nextBoolean()? -.5: .5)*offsetFromCenter;
-		return pos * (max - min) + min;
-	}
 
 	private void seedImage(String how) {
 		if(how.equals("Points")) {
@@ -738,17 +686,6 @@ public class Starburst extends JDesktopPane {
 		if(properties.getAsBoolean("renderDuringGeneration")) {
 			canvas.setRGB((int)x, (int)y, c);
 			this.repaint((int)x, (int)y, 1, 1);
-		}
-		if(gifEnc != null) {
-			BufferedImage frameImage = new BufferedImage(canvas.getWidth(), canvas.getHeight(), BufferedImage.TYPE_INT_RGB);
-			Graphics g = frameImage.getGraphics();
-			g.setColor(Color.BLACK);
-			g.drawRect(0, 0, canvas.getWidth(), canvas.getHeight());
-			g.setColor(new Color(c));
-			g.drawRect(x, y, 1, 1);
-			gifEnc.setDelay(0);
-			gifEnc.addFrame(frameImage);
-			gifEnc.setTransparent(Color.BLACK);
 		}
 	}
 

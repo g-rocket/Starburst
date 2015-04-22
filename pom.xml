@@ -119,11 +119,6 @@
       <version>2.0.1</version>
     </dependency>
     <dependency>
-      <groupId>com.madgag</groupId>
-      <artifactId>animated-gif-lib</artifactId>
-      <version>1.2</version>
-    </dependency>
-    <dependency>
       <groupId>com.google.code.gson</groupId>
       <artifactId>gson</artifactId>
       <version>2.3.1</version>
