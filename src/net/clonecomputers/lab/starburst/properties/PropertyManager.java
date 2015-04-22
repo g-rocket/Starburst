@@ -15,7 +15,7 @@ import ar.com.hjg.pngj.chunks.*;
 
 import com.google.gson.*;
 
-public class Properties {
+public class PropertyManager {
 	private Random r;
 	private Map<String, PropertyTreeNode> rootProperties = new LinkedHashMap<String, PropertyTreeNode>();
 	private Map<String, Property<?>> allProperties = new HashMap<String, Property<?>>();
@@ -24,10 +24,10 @@ public class Properties {
 	
 	public static void main(String[] args) {
 		VersionDependentMethodUtilities.initLookAndFeel();
-		Properties p = new Properties();
+		PropertyManager p = new PropertyManager();
 		System.out.println(p.allProperties.keySet());
-		p.set("size.width", 1024);
-		p.set("size.height", 768);
+		p.rootNode().set("size.width", 1024);
+		p.rootNode().set("size.height", 768);
 		JFrame window = new JFrame("Properties Test");
 		window.setContentPane(p.getChangeDialog());
 		window.pack();
@@ -40,7 +40,7 @@ public class Properties {
 		return changeDialog;
 	}
 	
-	public Properties() {
+	public PropertyManager() {
 		JsonObject config = new JsonParser().parse(new InputStreamReader(getClass().getResourceAsStream("Properties.json"))).getAsJsonObject();
 		r = new Random();
 		parse(config);
@@ -122,8 +122,8 @@ public class Properties {
 					throw new IllegalStateException("I can't close a "+window.getClass().getSimpleName());
 				}
 				*/
-				synchronized (Properties.this) {
-					Properties.this.notifyAll();
+				synchronized (PropertyManager.this) {
+					PropertyManager.this.notifyAll();
 				}
 			}
 		});
@@ -152,8 +152,8 @@ public class Properties {
 				} else {
 					throw new IllegalStateException("I can't close a "+window.getClass().getSimpleName());
 				}*/
-				synchronized (Properties.this) {
-					Properties.this.notifyAll();
+				synchronized (PropertyManager.this) {
+					PropertyManager.this.notifyAll();
 				}
 			}
 		});
@@ -175,8 +175,8 @@ public class Properties {
 
 	private void parse(JsonObject config) {
 		for(Map.Entry<String, JsonElement> property: config.entrySet()) {
-			rootProperties.put(property.getKey(), parseProperty(property.getValue().getAsJsonObject(), 
-					property.getKey(), toCamelCase(property.getKey()), null));
+			rootProperties.put(toCamelCase(property.getKey()), parseProperty(property.getValue().getAsJsonObject(), 
+					toCamelCase(property.getKey()), toCamelCase(property.getKey()), null));
 		}
 	}
 	
@@ -186,11 +186,11 @@ public class Properties {
 			if(subproperty.getKey().equalsIgnoreCase("category")) continue;
 			PropertyTreeNode parsedSubproperty = parseProperty(
 					subproperty.getValue().getAsJsonObject(),
-					subproperty.getKey(),
+					toCamelCase(subproperty.getKey()),
 					path + "." + toCamelCase(subproperty.getKey()),
 					category);
 			if(parsedSubproperty == null) continue;
-			parsedSubproperties.put(subproperty.getKey(), parsedSubproperty);
+			parsedSubproperties.put(toCamelCase(subproperty.getKey()), parsedSubproperty);
 		}
 		return parsedSubproperties;
 	}
@@ -325,39 +325,6 @@ public class Properties {
 		return(parsedProperty);
 	}
 	
-	public boolean maybeSet(String name, Object value) {
-		Property<?> p = allProperties.get(name);
-		if(!p.isValid(value)) return false;
-		p.setValue(value);
-		return true;
-	}
-	
-	public void set(String name, Object value) {
-		allProperties.get(name).setValue(value);
-	}
-	
-	public boolean isValid(String name, Object value) {
-		return allProperties.get(name).isValid(value);
-	}
-	
-	public Object get(String name) {
-		return allProperties.get(name).getValue();
-	}
-	
-	@SuppressWarnings("unchecked")
-	public <T> T get(Class<T> type, String name) throws ClassCastException {
-		return (T) allProperties.get(name).getValue();
-	}
-	
-	public boolean getAsBoolean(String name) { return get(boolean.class, name); }
-	public  double getAsDouble (String name) { return get( double.class, name); }
-	public   float getAsFloat  (String name) { return get(  float.class, name); }
-	public    long getAsLong   (String name) { return get(   long.class, name); }
-	public     int getAsInt    (String name) { return get(    int.class, name); }
-	public   short getAsShort  (String name) { return get(  short.class, name); }
-	public    byte getAsByte   (String name) { return get(   byte.class, name); }
-	public  String getAsString (String name) { return get( String.class, name); }
-	
 	public String toString() {
 		StringBuffer sb = new StringBuffer();
 		for(Map.Entry<String,Property<?>> p: allProperties.entrySet()) {
@@ -381,5 +348,9 @@ public class Properties {
 		for(Property<?> p: allProperties.values()) {
 			p.maybeRandomize();
 		}
+	}
+
+	public PropertyTreeNode rootNode() {
+		return new RootNode(rootProperties);
 	}
 }

@@ -6,7 +6,7 @@ import java.util.*;
 
 import javax.swing.*;
 
-public class EnumProperty extends AbstractProperty<String> implements PropertyTree {
+public class EnumProperty extends AbstractProperty<String> {
 	private final Random r;
 	private final String[] values;
 	private final Map<String, Map<String, PropertyTreeNode>> subproperties;
