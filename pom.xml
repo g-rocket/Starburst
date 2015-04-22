@@ -12,11 +12,12 @@
     <tag>HEAD</tag>
     <url>https://github.com/g-rocket/Starburst</url>
   </scm>
-  
+
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <mainClass>net.clonecomputers.lab.starburst.Starburst</mainClass>
   </properties>
-  
+
   <repositories>
     <repository>
       <id>snapshots</id>
@@ -25,9 +26,10 @@
     <repository>
       <id>apache-commons</id>
       <url>https://repository.apache.org/content/groups/snapshots/org/apache/commons/</url>
-    </repository><repository>
-        <id>project-contained-repo</id>
-        <url>file://${basedir}/lib</url>
+    </repository>
+    <repository>
+      <id>project-contained-repo</id>
+      <url>file://${basedir}/lib</url>
     </repository>
   </repositories>
 
@@ -59,7 +61,7 @@
           <encoding>${project.build.sourceEncoding}</encoding>
         </configuration>
       </plugin>
-      
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
@@ -81,13 +83,13 @@
           </execution>
         </executions>
       </plugin>
-      
+
       <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
         <configuration>
           <archive>
             <manifest>
-              <mainClass>net.clonecomputers.lab.starburst.Starburst</mainClass>
+              <mainClass>${mainClass}</mainClass>
             </manifest>
           </archive>
           <descriptorRefs>
@@ -104,10 +106,45 @@
           </execution>
         </executions>
       </plugin>
+
+      <plugin>
+        <groupId>com.nativelibs4java</groupId>
+        <artifactId>maven-javacl-plugin</artifactId>
+        <version>1.0.0-RC4</version>
+        <executions>
+          <execution>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>compile</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>1.2.1</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>java</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <mainClass>${mainClass}</mainClass>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
-  
+
   <dependencies>
+    <dependency>
+      <groupId>com.nativelibs4java</groupId>
+      <artifactId>javacl</artifactId>
+      <version>1.0.0-RC4</version>
+    </dependency>
     <dependency>
       <groupId>com.apple</groupId>
       <artifactId>AppleJavaExtensions</artifactId>
