@@ -1,6 +1,7 @@
 package net.clonecomputers.lab.starburst.properties.types;
 
 import java.awt.*;
+import java.lang.reflect.*;
 import java.util.*;
 
 import javax.swing.*;
@@ -19,8 +20,17 @@ public class ColorProperty extends AbstractProperty<Color> {
 		finishConstruction();
 		if(data.has("initialValue")) {
 			String colorString = data.get("initialValue").getAsString();
-			Color initialColor = Color.getColor(colorString);
-			if(initialColor == null) initialColor = Color.decode(colorString);
+			Color initialColor;
+			try {
+	        final Field f = Color.class.getField(colorString.toUpperCase());
+	        initialColor = (Color) f.get(null);
+			} catch(NoSuchFieldException e) {
+				initialColor = Color.decode(colorString);
+			} catch (IllegalArgumentException e) {
+				throw new RuntimeException(e);
+			} catch (IllegalAccessException e) {
+				throw new RuntimeException(e);
+			}
 			setValue(initialColor);
 		}
 	}
