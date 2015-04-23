@@ -1,6 +1,7 @@
 package net.clonecomputers.lab.starburst.properties.types;
 
 import java.awt.event.*;
+import java.util.*;
 
 import net.clonecomputers.lab.starburst.properties.*;
 import net.clonecomputers.lab.starburst.properties.random.*;
@@ -9,6 +10,22 @@ import com.google.gson.*;
 
 public class IntProperty extends AbstractNumberProperty<Integer> {
 	private final int smin, smax;
+	
+	public IntProperty(String name, String category, Random r, JsonObject data) {
+		super(name, category, r, data);
+		if(data.has("slider") && data.get("slider").isJsonArray()) {
+			smin = data.get("slider").getAsJsonArray().get(0).getAsInt();
+			smax = data.get("slider").getAsJsonArray().get(1).getAsInt();
+		} else if(!data.get("slider").getAsBoolean()){
+			smin = 1;
+			smax = 1;
+		} else {
+			smin = 0;
+			smax = 0;
+		}
+		finishConstruction();
+		if(data.has("initialValue")) setValue(data.get("initialValue").getAsInt());
+	}
 	
 	public IntProperty(String name, String category,
 			double min, double max,

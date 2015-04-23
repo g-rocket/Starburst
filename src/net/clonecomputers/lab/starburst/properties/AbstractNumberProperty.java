@@ -2,20 +2,58 @@ package net.clonecomputers.lab.starburst.properties;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.util.*;
 
 import javax.swing.*;
 import javax.swing.event.*;
 
 import net.clonecomputers.lab.starburst.properties.random.*;
 
+import com.google.common.reflect.*;
 import com.google.gson.*;
 
 public abstract class AbstractNumberProperty<T extends Number> extends AbstractProperty<T> {
+	private final TypeToken<T> type = new TypeToken<T>(getClass()){};
 	protected final Randomizer<T> r;
 	protected double min;
 	protected double max;
 	protected JTextField textBox;
 	protected JSlider slider;
+
+	@SuppressWarnings("unchecked")
+	public AbstractNumberProperty(String name, String category, Random r, JsonObject data) {
+		super(name, category, data);
+		if(data.has("range")) {
+			JsonElement jmin = data.get("range").getAsJsonArray().get(0);
+			JsonElement jmax = data.get("range").getAsJsonArray().get(1);
+			if(jmin.getAsJsonPrimitive().isString() && jmin.getAsString().equalsIgnoreCase("-Infinity")) {
+				min = Double.NEGATIVE_INFINITY;
+			} else {
+				min = jmin.getAsDouble();
+			}
+			if(jmax.getAsJsonPrimitive().isString() && jmax.getAsString().equalsIgnoreCase("Infinity")) {
+				max = Double.POSITIVE_INFINITY;
+			} else {
+				max = jmax.getAsDouble();
+			}
+		} else {
+			min = Double.NEGATIVE_INFINITY;
+			max = Double.POSITIVE_INFINITY;
+		}
+		if(isDiscrete((Class<? extends Number>) type.getRawType())) {
+			if((!Double.isInfinite(max) && max != Math.round(max)) ||
+			   (!Double.isInfinite(max) && max != Math.round(max))) {
+				throw new IllegalArgumentException(String.format("Json passed to %s is invalid: max and min are not both integers: [%f,%f]", getClass().getCanonicalName(), max, min));
+			}
+		}
+		if(!Double.isInfinite(max) && isDiscrete((Class<? extends Number>) type.getRawType())) max = Math.round(max);
+		if(!Double.isInfinite(min) && isDiscrete((Class<? extends Number>) type.getRawType())) min = Math.round(min);
+		this.r = Randomizer.createRandomizer((Class<T>)type.getRawType(), r, min, max, data.get("random"));
+	}
+	
+	private static boolean isDiscrete(Class<? extends Number> c) {
+		return !(c.isInstance(Double.class) || c.isInstance(Float.class));
+	}
 
 	public AbstractNumberProperty(String name, String category, double min, double max, Randomizer<T> r) {
 		super(name, category, r.canRandomize());
