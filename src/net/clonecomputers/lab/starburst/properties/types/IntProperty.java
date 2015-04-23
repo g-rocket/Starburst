@@ -11,8 +11,8 @@ import com.google.gson.*;
 public class IntProperty extends AbstractNumberProperty<Integer> {
 	private final int smin, smax;
 	
-	public IntProperty(String name, String category, Random r, JsonObject data) {
-		super(name, category, r, data);
+	public IntProperty(String name, String category, JsonObject data, Random r) {
+		super(name, category, data, r);
 		if(data.has("slider") && data.get("slider").isJsonArray()) {
 			smin = data.get("slider").getAsJsonArray().get(0).getAsInt();
 			smax = data.get("slider").getAsJsonArray().get(1).getAsInt();

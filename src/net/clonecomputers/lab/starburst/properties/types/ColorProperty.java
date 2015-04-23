@@ -13,6 +13,18 @@ public class ColorProperty extends AbstractProperty<Color> {
 	private final Random r;
 	private JColorChooser colorChooser;
 	
+	public ColorProperty(String name, String category, JsonObject data, Random r) {
+		super(name, category, data);
+		this.r = r;
+		finishConstruction();
+		if(data.has("initialValue")) {
+			String colorString = data.get("initialValue").getAsString();
+			Color initialColor = Color.getColor(colorString);
+			if(initialColor == null) initialColor = Color.decode(colorString);
+			setValue(initialColor);
+		}
+	}
+	
 	public ColorProperty(String name, String category, boolean shouldRandomize, Random r) {
 		super(name, category, shouldRandomize);
 		this.r = r;

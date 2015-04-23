@@ -1,8 +1,11 @@
 package net.clonecomputers.lab.starburst.properties.types;
 
+import static net.clonecomputers.lab.starburst.util.StaticUtils.*;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
+import java.util.List;
 
 import javax.swing.*;
 
@@ -14,8 +17,24 @@ public class EnumProperty extends AbstractProperty<String> implements PropertyTr
 	private final Random r;
 	private final String[] values;
 	private final Map<String, Map<String, PropertyTreeNode>> subproperties;
-	private JComboBox valueMenu;
+	private JComboBox<String> valueMenu;
 	private JPanel centerPanel;
+	
+	public EnumProperty(String name, String category, JsonObject data, Random r, String path, PropertyManager pm) {
+		super(name, category, data);
+		this.subproperties = new LinkedHashMap<String, Map<String, PropertyTreeNode>>();
+		List<String> values = new LinkedList<String>();
+		for(Map.Entry<String, JsonElement> value: data.getAsJsonObject("values").entrySet()) {
+			if(value.getValue().getAsJsonObject().has("disabled") &&
+					value.getValue().getAsJsonObject().get("disabled").getAsBoolean()) continue;
+			subproperties.put(toCamelCase(value.getKey()), pm.parseSubproperties(value.getValue().getAsJsonObject(),
+					path + "." + toCamelCase(value.getKey()), category));
+			values.add(value.getKey());
+		}
+		this.values = values.toArray(new String[0]);
+		this.r = r;
+		finishConstruction();
+	}
 
 	public EnumProperty(String name, String category, Map<String, Map<String, PropertyTreeNode>> values, boolean shouldRandomize, Random r) {
 		super(name, category, shouldRandomize);
@@ -131,11 +150,11 @@ public class EnumProperty extends AbstractProperty<String> implements PropertyTr
 
 	@Override
 	protected JComponent createPropertyPanel() {
-		valueMenu = new JComboBox(values);
+		valueMenu = new JComboBox<String>(values);
 		valueMenu.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				((CardLayout)centerPanel.getLayout()).show(centerPanel, (String)valueMenu.getSelectedItem());
+				((CardLayout)centerPanel.getLayout()).show(centerPanel, toCamelCase((String)valueMenu.getSelectedItem()));
 				changePanel.revalidate();
 				changePanel.repaint();
 				if(centerPanel.getSize().width  < centerPanel.getMinimumSize().width  ||
@@ -152,9 +171,9 @@ public class EnumProperty extends AbstractProperty<String> implements PropertyTr
 	@Override
 	protected JComponent createCenterPanel() {
 		centerPanel = new JPanel(new CardLayout());
-		for(Map.Entry<String, Map<String, PropertyTreeNode>> subpropertyiesForValue: subproperties.entrySet()) {
+		for(Map.Entry<String, Map<String, PropertyTreeNode>> subpropertiesForValue: subproperties.entrySet()) {
 			JComponent panel = new Box(BoxLayout.PAGE_AXIS);
-			for(PropertyTreeNode p: subpropertyiesForValue.getValue().values()) {
+			for(PropertyTreeNode p: subpropertiesForValue.getValue().values()) {
 				panel.add(p.getChangePanel());
 			}
 			if(panel.getComponentCount() > 0) {
@@ -163,7 +182,7 @@ public class EnumProperty extends AbstractProperty<String> implements PropertyTr
 			JPanel panelWithExtraSpace = new JPanel(new BorderLayout());
 			panelWithExtraSpace.add(panel, BorderLayout.BEFORE_FIRST_LINE);
 			panelWithExtraSpace.setVisible(false);
-			centerPanel.add(panelWithExtraSpace, subpropertyiesForValue.getKey());
+			centerPanel.add(panelWithExtraSpace, subpropertiesForValue.getKey());
 		}
 		return centerPanel;
 	}

@@ -21,7 +21,7 @@ public abstract class AbstractNumberProperty<T extends Number> extends AbstractP
 	protected JSlider slider;
 
 	@SuppressWarnings("unchecked")
-	public AbstractNumberProperty(String name, String category, Random r, JsonObject data) {
+	public AbstractNumberProperty(String name, String category, JsonObject data, Random r) {
 		super(name, category, data);
 		if(data.has("range")) {
 			JsonElement jmin = data.get("range").getAsJsonArray().get(0);

@@ -14,8 +14,8 @@ public class DoubleProperty extends AbstractNumberProperty<Double> {
 	private final int precision = 10000;
 	private final double sliderPower = -1.5;
 	
-	public DoubleProperty(String name, String category, Random r, JsonObject data) {
-		super(name, category, r, data);
+	public DoubleProperty(String name, String category, JsonObject data, Random r) {
+		super(name, category, data, r);
 		finishConstruction();
 		if(data.has("initialValue")) setValue(data.get("initialValue").getAsDouble());
 	}

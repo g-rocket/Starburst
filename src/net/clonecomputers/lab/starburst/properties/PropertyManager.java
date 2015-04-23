@@ -1,11 +1,12 @@
 package net.clonecomputers.lab.starburst.properties;
 
+import static net.clonecomputers.lab.starburst.util.StaticUtils.*;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
 import java.util.*;
 import java.util.List;
-import java.util.regex.*;
 
 import javax.swing.*;
 
@@ -108,20 +109,6 @@ public class PropertyManager {
 			public void actionPerformed(ActionEvent e) {
 				Component window = SwingUtilities.getAncestorOfClass(RootPaneContainer.class, changeDialog);
 				window.setVisible(false);
-				/*
-				if(window instanceof Window) {
-					window.dispatchEvent(new WindowEvent((Window)window, WindowEvent.WINDOW_CLOSING));
-				} else if(window instanceof JInternalFrame) {
-					try {
-						((JInternalFrame)window).setClosed(true);
-					} catch (PropertyVetoException e1) {
-						System.err.println("the frame doesn't seem to want to close: ");
-						e1.printStackTrace();
-					}
-				} else {
-					throw new IllegalStateException("I can't close a "+window.getClass().getSimpleName());
-				}
-				*/
 				synchronized (PropertyManager.this) {
 					PropertyManager.this.notifyAll();
 				}
@@ -140,18 +127,6 @@ public class PropertyManager {
 				}
 				Component window = SwingUtilities.getAncestorOfClass(RootPaneContainer.class, changeDialog);
 				window.setVisible(false);
-				/*if(window instanceof Window) {
-					window.dispatchEvent(new WindowEvent((Window)window, WindowEvent.WINDOW_CLOSING));
-				} else if(window instanceof JInternalFrame) {
-					try {
-						((JInternalFrame)window).setClosed(true);
-					} catch (PropertyVetoException e1) {
-						System.err.println("the frame doesn't seem to want to close: ");
-						e1.printStackTrace();
-					}
-				} else {
-					throw new IllegalStateException("I can't close a "+window.getClass().getSimpleName());
-				}*/
 				synchronized (PropertyManager.this) {
 					PropertyManager.this.notifyAll();
 				}
@@ -176,48 +151,23 @@ public class PropertyManager {
 	private void parse(JsonObject config) {
 		for(Map.Entry<String, JsonElement> property: config.entrySet()) {
 			rootProperties.put(toCamelCase(property.getKey()), parseProperty(property.getValue().getAsJsonObject(), 
-					toCamelCase(property.getKey()), toCamelCase(property.getKey()), null));
+					property.getKey(), toCamelCase(property.getKey()), null));
 		}
 	}
 	
-	private Map<String, PropertyTreeNode> parseSubproperties(JsonObject subproperties, String path, String category) {
+	public Map<String, PropertyTreeNode> parseSubproperties(JsonObject subproperties, String path, String category) {
 		Map<String, PropertyTreeNode> parsedSubproperties = new LinkedHashMap<String, PropertyTreeNode>();
 		for(Map.Entry<String, JsonElement> subproperty: subproperties.entrySet()) {
 			if(subproperty.getKey().equalsIgnoreCase("category")) continue;
 			PropertyTreeNode parsedSubproperty = parseProperty(
 					subproperty.getValue().getAsJsonObject(),
-					toCamelCase(subproperty.getKey()),
+					subproperty.getKey(),
 					path + "." + toCamelCase(subproperty.getKey()),
 					category);
 			if(parsedSubproperty == null) continue;
 			parsedSubproperties.put(toCamelCase(subproperty.getKey()), parsedSubproperty);
 		}
 		return parsedSubproperties;
-	}
-
-	static Pattern hyphenRegex = Pattern.compile("(?<=^|\\s)([^\\s]*-[^\\s]*)(?=$|\\s)");
-	static Pattern spaceRegex = Pattern.compile("\\s+(\\w)");
-	private static String toCamelCase(String s) {
-		StringBuffer dehyphenated = new StringBuffer();
-		Matcher hyphenMatcher = hyphenRegex.matcher(s);
-		while(hyphenMatcher.find()) {
-			hyphenMatcher.appendReplacement(dehyphenated, "");
-			String[] words = s.substring(hyphenMatcher.start(), hyphenMatcher.end()).split("-");
-			for(String word: words) {
-				dehyphenated.append(word.charAt(0));
-			}
-		}
-		hyphenMatcher.appendTail(dehyphenated);
-		s = dehyphenated.toString();
-		s = s.toLowerCase();
-		StringBuffer camelcase = new StringBuffer();
-		Matcher spaceMatcher = spaceRegex.matcher(s);
-		while(spaceMatcher.find()) {
-			spaceMatcher.appendReplacement(camelcase, spaceMatcher.group(1).toUpperCase());
-		}
-		spaceMatcher.appendTail(camelcase);
-		s = camelcase.toString();
-		return s;
 	}
 	
 	private PropertyTreeNode parseProperty(JsonObject property, String name, String path, String category) {
@@ -239,34 +189,15 @@ public class PropertyManager {
 		String type = property.get("type").getAsString();
 		categories.add(category);
 		if(type.equalsIgnoreCase("enum")) {
-			Map<String, Map<String, PropertyTreeNode>> values = new LinkedHashMap<String, Map<String, PropertyTreeNode>>();
-			for(Map.Entry<String, JsonElement> value: property.getAsJsonObject("values").entrySet()) {
-				if(value.getValue().getAsJsonObject().has("disabled") &&
-						value.getValue().getAsJsonObject().get("disabled").getAsBoolean()) continue;
-				values.put(value.getKey(), parseSubproperties(value.getValue().getAsJsonObject(),
-						path + "." + toCamelCase(value.getKey()), category));
-			}
-			parsedProperty = new EnumProperty(name, category, values, canRandomize, r);
-			if(property.has("initialValue")) parsedProperty.setValue(property.get("initialValue").getAsString());
+			parsedProperty = new EnumProperty(name, category, property, r, path, this);
 		} else if(type.equalsIgnoreCase("int")) {
-			parsedProperty = new IntProperty(name, category, r, property);
+			parsedProperty = new IntProperty(name, category, property, r);
 		} else if(type.equalsIgnoreCase("double")) {
-			parsedProperty = new DoubleProperty(name, category, r, property);
+			parsedProperty = new DoubleProperty(name, category, property, r);
 		} else if(type.equalsIgnoreCase("Color")) {
-			parsedProperty = new ColorProperty(name, category, canRandomize, r);
-			if(property.has("initialValue")) {
-				String colorString = property.get("initialValue").getAsString();
-				Color initialColor = Color.getColor(colorString);
-				if(initialColor == null) initialColor = Color.decode(colorString);
-				parsedProperty.setValue(initialColor);
-			}
+			parsedProperty = new ColorProperty(name, category, property, r);
 		} else if(type.equalsIgnoreCase("boolean")) {
-			parsedProperty = new BooleanProperty(name, category, canRandomize, r);
-			if(property.has("initialValue")) {
-				String initialString = property.get("initialValue").getAsString();
-				boolean initialValue = Boolean.parseBoolean(initialString);
-				parsedProperty.setValue(initialValue);
-			}
+			parsedProperty = new BooleanProperty(name, category, property, r);
 		} else {
 			throw new IllegalStateException("invalid type: "+type);
 		}

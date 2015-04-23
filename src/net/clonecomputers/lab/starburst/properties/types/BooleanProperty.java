@@ -12,6 +12,17 @@ public class BooleanProperty extends AbstractProperty<Boolean> {
 	private final Random r;
 	private JCheckBox checkBox;
 
+	public BooleanProperty(String name, String category, JsonObject data, Random r) {
+		super(name, category, data);
+		this.r = r;
+		finishConstruction();
+		if(data.has("initialValue")) {
+			String initialString = data.get("initialValue").getAsString();
+			boolean initialValue = Boolean.parseBoolean(initialString);
+			setValue(initialValue);
+		}
+	}
+
 	public BooleanProperty(String name, String category, boolean canRandomize, Random r) {
 		super(name, category, canRandomize);
 		this.r = r;
