@@ -20,10 +20,10 @@ public abstract class AbstractProperty<T> extends AbstractPropertyTreeNode imple
 	public AbstractProperty(String name, String category, JsonObject data) {
 		super(name, category);
 		canRandomize = 
-				!(data.has("randomize") &&
-				data.get("randomize").isJsonPrimitive() &&
-				data.get("randomize").getAsJsonPrimitive().isBoolean() &&
-				!data.get("randomize").getAsBoolean());
+				!(data.has("random") &&
+				data.get("random").isJsonPrimitive() &&
+				data.get("random").getAsJsonPrimitive().isBoolean() &&
+				!data.get("random").getAsBoolean());
 	}
 	
 	public AbstractProperty(String name, String category, boolean canRandomize) {
