@@ -6,7 +6,7 @@ import java.util.*;
 import javax.swing.*;
 
 
-public class PropertyGroup extends AbstractPropertyTreeNode implements PropertyTree {
+public class PropertyGroup extends AbstractPropertyTreeNode implements PropertyTreeNode {
 	private final Map<String, PropertyTreeNode> subproperties;
 
 	public PropertyGroup(String name, String category, Map<String, PropertyTreeNode> subproperties) {

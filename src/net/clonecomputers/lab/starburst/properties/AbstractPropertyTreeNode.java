@@ -2,10 +2,11 @@ package net.clonecomputers.lab.starburst.properties;
 
 import java.awt.*;
 import java.lang.reflect.*;
+import java.util.*;
 
 import javax.swing.*;
 
-public abstract class AbstractPropertyTreeNode implements PropertyTreeNode {
+public abstract class AbstractPropertyTreeNode extends AbstractPropertyTreeNode0 implements PropertyTreeNode {
 	protected final String name;
 	protected final String category;
 
@@ -14,6 +15,11 @@ public abstract class AbstractPropertyTreeNode implements PropertyTreeNode {
 	public AbstractPropertyTreeNode(String name, String category) {
 		this.name = name;
 		this.category = category;
+	}
+	
+	@Override
+	public Map<String, PropertyTreeNode> subproperties() {
+		return Collections.emptyMap();
 	}
 	
 	@Override

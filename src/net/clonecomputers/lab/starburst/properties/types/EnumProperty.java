@@ -10,7 +10,7 @@ import net.clonecomputers.lab.starburst.properties.*;
 
 import com.google.gson.*;
 
-public class EnumProperty extends AbstractProperty<String> implements PropertyTree {
+public class EnumProperty extends AbstractProperty<String> implements PropertyTreeNode {
 	private final Random r;
 	private final String[] values;
 	private final Map<String, Map<String, PropertyTreeNode>> subproperties;
