@@ -35,6 +35,7 @@ public class StaticUtils {
 	}
 	
 	static Pattern hyphenRegex = Pattern.compile("(?<=^|\\s)([^\\s]*-[^\\s]*)(?=$|\\s)");
+	static Pattern punctuationRegex = Pattern.compile("[^a-zA-Z0-9]+");
 	static Pattern spaceRegex = Pattern.compile("\\s+(\\w)");
 	public static String toCamelCase(String s) {
 		StringBuffer dehyphenated = new StringBuffer();
@@ -49,6 +50,7 @@ public class StaticUtils {
 		hyphenMatcher.appendTail(dehyphenated);
 		s = dehyphenated.toString();
 		s = s.toLowerCase();
+		s = punctuationRegex.matcher(s).replaceAll(" ");
 		StringBuffer camelcase = new StringBuffer();
 		Matcher spaceMatcher = spaceRegex.matcher(s);
 		while(spaceMatcher.find()) {
