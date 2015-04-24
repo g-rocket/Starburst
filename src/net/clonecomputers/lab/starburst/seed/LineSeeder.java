@@ -1,12 +1,12 @@
 package net.clonecomputers.lab.starburst.seed;
 
 import static java.lang.Math.*;
+import static net.clonecomputers.lab.starburst.util.StaticUtils.*;
 
 import java.awt.*;
 
 import net.clonecomputers.lab.starburst.*;
 import net.clonecomputers.lab.starburst.properties.*;
-import static net.clonecomputers.lab.starburst.util.StaticUtils.*;
 
 public class LineSeeder extends Seeder {
 
@@ -15,7 +15,6 @@ public class LineSeeder extends Seeder {
 	}
 	
 	public void seedImage(PropertyTreeNode properties) {
-		System.out.println(properties.subproperties().keySet());
 		int numberOfLines = (int)(properties.getAsDouble("distribution.density") * (s.getImageWidth()*s.getImageHeight()) / properties.getAsInt("distribution.length"));
 		if (numberOfLines<1) numberOfLines = 1;
 		for (int j = 0; j < numberOfLines; j++) {
