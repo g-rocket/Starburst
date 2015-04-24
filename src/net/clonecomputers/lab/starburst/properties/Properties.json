@@ -14,7 +14,7 @@
 					"range": [0, 1]
 				},
 				"Color": {
-					"type": "color"
+					"type": "Color"
 				}
 			},
 			"Lines": {
@@ -132,9 +132,29 @@
 	"Finalization Method": {
 		"type": "enum",
 		"values": {
-			"Squares then loop (x,y)": {},
+			"Squares then loop (x,y)": {
+				"Square Density": {
+					"type": "double",
+					"range": [0, 1],
+					"slider": {
+						"type": "biased",
+						"range": [0,1],
+						"bias": 0.01
+					},
+					"random": {
+						"type": "biased",
+						"bias": 0.01
+					}
+				}
+			},
 			"Loop (x,y)": {},
-			"Fill with black": {},
+			"Fill with solid color": {
+				"Color": {
+					"type": "Color",
+					"random": false,
+					"initialValue": "Black"
+				}
+			},
 			"Redo from point": {}
 		},
 		"category": "General"

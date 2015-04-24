@@ -3,8 +3,8 @@ package net.clonecomputers.lab.starburst;
 import static java.lang.Math.*;
 import static net.clonecomputers.lab.starburst.util.StaticUtils.*;
 
-import java.awt.*;
 import java.awt.Dialog.ModalityType;
+import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.*;
 import java.io.*;
@@ -16,6 +16,7 @@ import java.util.concurrent.*;
 import javax.imageio.*;
 import javax.swing.*;
 
+import net.clonecomputers.lab.starburst.finalize.*;
 import net.clonecomputers.lab.starburst.properties.*;
 import net.clonecomputers.lab.starburst.seed.*;
 import ar.com.hjg.pngj.*;
@@ -29,7 +30,7 @@ public class Starburst extends JDesktopPane {
 	public boolean current[][];
 	public PixelOperationsList operations;
 
-	private Pair centerPair;
+	public Pair centerPair;
 	private PropertyManager propertyManager;
 	private PropertyTreeNode properties;
 
@@ -533,9 +534,9 @@ public class Starburst extends JDesktopPane {
 	}
 
 	private void seedImage(Property<? extends String> how) {
-		if(how.getValue().equalsIgnoreCase("Points")) {
+		if(how.getValue().equals("Points")) {
 			new PointSeeder(this).seedImage(how);
-		} else if(how.getValue().equalsIgnoreCase("Lines")) {
+		} else if(how.getValue().equals("Lines")) {
 			new LineSeeder(this).seedImage(how);
 		} else {
 			throw new IllegalArgumentException("Invalid seed method: "+how);
@@ -633,67 +634,20 @@ public class Starburst extends JDesktopPane {
 			throw new RuntimeException(e);
 		}
 		if(properties.getAsDouble("probabilityOfInclusion") < 1) {
-			finalizePixels(properties.getAsString("finalizationMethod"));
+			finalizePixels(properties.getSubproperty(String.class, "finalizationMethod"));
 		}
 		operations.clear();
 	}
 
-	private void randomSeedPixels() {
-		for (int x=0;x<canvas.getWidth();x++) {
-			for (int y=0;y<canvas.getHeight();y++) {
-				if (!current[x][y]&&rand.nextInt(1000)<2) {
-					for (int i=x;i<x+10&&i<canvas.getWidth();i++) {
-						for (int j=y;j<y+10&&j<canvas.getHeight();j++) {
-							if (!current[i][j]) fillPixel(i, j);
-						}
-					}
-				}
-			}
-		}
-	}
-
-	private void finalizePixels(String how) {
-		if(how.equals("Squares then loop (x,y)")) {
-			randomSeedPixels();
-			for (int x=0;x<canvas.getWidth();x++) {
-				for (int y=0;y<canvas.getHeight();y++) {
-					if (!current[x][y]) fillPixel(x, y);
-				}
-			}
-		} else if(how.equals("Loop (x,y)")) {
-			for (int x=0;x<canvas.getWidth();x++) {
-				for (int y=0;y<canvas.getHeight();y++) {
-					if (!current[x][y]) fillPixel(x, y);
-				}
-			}
-		} else if(how.equals("Fill with black")) {
-			for (int x=0;x<canvas.getWidth();x++) {
-				for (int y=0;y<canvas.getHeight();y++) {
-					if (!current[x][y]) setPixel(x, y, Color.BLACK.getRGB());
-				}
-			}
-		} else if(how.equals("Redo from point")) {
-			boolean[][] localcurrent = new boolean[canvas.getWidth()][canvas.getHeight()];
-			operations.addPoint(centerPair.x,centerPair.y);
-			Pair myPair;
-			while ((myPair = operations.getPoint()) != null) {
-				int x=myPair.x, y=myPair.y;
-				if (localcurrent[x][y]) continue;
-				if (!current[x][y]) fillPixel(x, y);
-				if (((y+1)<canvas.getHeight())&&!localcurrent[x][y+1]) {
-					operations.addPoint(x, y+1);
-				}
-				if (((x+1)<canvas.getWidth())&&!localcurrent[x+1][y]) {
-					operations.addPoint(x+1, y);
-				}
-				if (((y-1)>=0)&&!localcurrent[x][y-1]) {
-					operations.addPoint(x, y-1);
-				}
-				if (((x-1)>=0)&&!localcurrent[x-1][y]) {
-					operations.addPoint(x-1, y);
-				}
-				localcurrent[x][y]=true;
-			}
+	private void finalizePixels(Property<? extends String> how) {
+		if(how.getValue().equals("Squares then loop (x,y)")) {
+			new SquareFinalizer(this).finalizeImage(how);
+		} else if(how.getValue().equals("Loop (x,y)")) {
+			new LoopFromTopLeftFinalizer(this).finalizeImage(how);
+		} else if(how.getValue().equals("Fill with solid color")) {
+			new SolidFinalizer(this).finalizeImage(how);
+		} else if(how.getValue().equals("Redo from point")) {
+			new RegenFinalizer(this).finalizeImage(how);
 		} else {
 			throw new IllegalArgumentException("Don't know how to finalize by "+how);
 		}
@@ -712,7 +666,7 @@ public class Starburst extends JDesktopPane {
 	 * @param x
 	 * @param y
 	 */
-	private void fillPixel(int x, int y) {
+	public void fillPixel(int x, int y) {
 		int maxr=255, minr=0;
 		int maxg=255, ming=0;
 		int maxb=255, minb=0;
