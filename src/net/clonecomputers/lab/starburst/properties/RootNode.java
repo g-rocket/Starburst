@@ -55,5 +55,15 @@ public class RootNode extends AbstractPropertyTreeNode0 implements PropertyTreeN
 	public Map<String, PropertyTreeNode> subproperties() {
 		return subproperties;
 	}
+	
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder("{\n");
+		for(PropertyTreeNode p: subproperties.values()) {
+			sb.append(p.toString(2));
+		}
+		sb.append("}\n");
+		return sb.toString();
+	}
 
 }
