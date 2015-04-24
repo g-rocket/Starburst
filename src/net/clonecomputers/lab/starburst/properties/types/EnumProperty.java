@@ -145,7 +145,7 @@ public class EnumProperty extends AbstractProperty<String> implements PropertyTr
 
 	@Override
 	public Map<String, PropertyTreeNode> subproperties() {
-		return subproperties.get(value);
+		return subproperties.get(toCamelCase(value));
 	}
 
 	@Override
