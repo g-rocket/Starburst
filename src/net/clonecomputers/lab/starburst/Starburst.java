@@ -552,10 +552,6 @@ public class Starburst extends JDesktopPane {
 					for(Pair p: getNeighbors(x, y)) {
 						if(!current[p.x][p.y]) operations.addPoint(x, y); 
 					}
-					if (x+1<current.length && !current[x+1][y]) operations.addPoint(x+1, y);
-					if (x-1>=0 && !current[x-1][y]) operations.addPoint(x-1, y);
-					if (y+1<current[0].length && !current[x][y+1]) operations.addPoint(x, y+1);
-					if (y-1>=0 && !current[x][y-1]) operations.addPoint(x, y-1);
 				}
 			}
 		}
@@ -616,14 +612,7 @@ public class Starburst extends JDesktopPane {
 		for (int i=0;i<THREADNUM;i++) {
 			threads.add(new Callable<Object>() {
 				public Object call() throws Exception {
-					try{
-						fillAllPixels();
-					} catch(Exception e) {
-						e.printStackTrace();
-						// would be ignored if I just passed it
-						// at least this way I hear about it
-						throw e;
-					}
+					fillAllPixels();
 					return null;
 				}
 			});
