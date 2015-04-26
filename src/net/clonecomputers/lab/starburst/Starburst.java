@@ -550,7 +550,7 @@ public class Starburst extends JDesktopPane {
 			for (int y = 0; y < current[0].length; y++) {
 				if (current[x][y]) {
 					for(Pair p: getNeighbors(x, y)) {
-						if(!current[p.x][p.y]) operations.addPoint(x, y); 
+						if(!current[p.x][p.y]) operations.addPoint(p.x, p.y); 
 					}
 				}
 			}
