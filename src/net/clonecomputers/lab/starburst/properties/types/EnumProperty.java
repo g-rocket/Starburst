@@ -48,7 +48,7 @@ public class EnumProperty extends AbstractProperty<String> implements PropertyTr
 
 	@Override
 	public boolean isValidValue(String newValue) {
-		return subproperties.containsKey(newValue);
+		return subproperties.containsKey(toCamelCase(newValue));
 	}
 
 	@Override
