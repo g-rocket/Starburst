@@ -77,4 +77,21 @@ public class PixelOperationsList {
 			operations[wrap(start++)] = null;
 		}
 	}
+	
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder(length()*8 + 90);
+		sb.append("PixelOperationsList(removeOrderBias = ");
+		sb.append(removeOrderBias);
+		sb.append(", length = ");
+		sb.append(length());
+		sb.append(", operations = {");
+		for(long i = start; i < end; i++) {
+			sb.append(operations[wrap(i)]);
+			sb.append(", ");
+		}
+		if(hasPoint()) sb.delete(sb.length() - 3, sb.length()); // remove trailing ", "
+		sb.append("})");
+		return sb.toString();
+	}
 }
