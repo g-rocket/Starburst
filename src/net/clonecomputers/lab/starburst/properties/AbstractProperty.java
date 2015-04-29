@@ -53,7 +53,7 @@ public abstract class AbstractProperty<T> extends AbstractPropertyTreeNode imple
 	 * @param newValue has already been checked to be of the right type
 	 * @return whether newValue is a valid value
 	 */
-	public boolean isValidValue(T newValue) {
+	protected boolean isValidValue(T newValue) {
 		return true;
 	}
 
