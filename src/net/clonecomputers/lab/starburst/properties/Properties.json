@@ -155,7 +155,8 @@
 					"initialValue": "Black"
 				}
 			},
-			"Redo from point": {}
+			"Redo from point": {},
+			"Generate from outsides of holes": {}
 		},
 		"category": "General"
 	},

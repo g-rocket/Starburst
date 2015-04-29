@@ -32,7 +32,7 @@ public class Starburst extends JDesktopPane {
 
 	public Pair centerPair;
 	private PropertyManager propertyManager;
-	private PropertyTreeNode properties;
+	public PropertyTreeNode properties;
 
 	public static final ExecutorService exec = Executors.newCachedThreadPool();
 	private static final int THREADNUM = Runtime.getRuntime().availableProcessors() + 1;
@@ -302,8 +302,13 @@ public class Starburst extends JDesktopPane {
 		seedImage(properties.getSubproperty(String.class, "seedMethod"));
 		System.out.println("done seeding");
 		fillOperations();
-		fillAll();
+		generateImage();
+		operations.clear();
 		System.out.println("done generating");
+		if(properties.getAsDouble("probabilityOfInclusion") < 1) {
+			finalizeImage(properties.getSubproperty(String.class, "finalizationMethod"));
+		}
+		System.out.println("done finalizing");
 		savePixels();
 		System.out.println("end newImage");
 		System.out.printf("took %d millis\n",System.currentTimeMillis()-sTime);
@@ -509,7 +514,7 @@ public class Starburst extends JDesktopPane {
 	}
 
 	private void mousePressed() {
-		System.out.println("mousePressed");
+		System.out.println("saving image");
 		exec.execute(new Runnable(){
 			@Override public void run(){
 				File output = chooseFile(JFileChooser.SAVE_DIALOG, JFileChooser.FILES_ONLY);
@@ -545,7 +550,7 @@ public class Starburst extends JDesktopPane {
 
 	
 
-	private void fillOperations() {
+	public void fillOperations() {
 		for (int x = 0; x < current.length; x++) {
 			for (int y = 0; y < current[0].length; y++) {
 				if (current[x][y]) {
@@ -607,7 +612,7 @@ public class Starburst extends JDesktopPane {
 		return neighbors;
 	}
 
-	private void fillAll() {
+	public void generateImage() {
 		List<Callable<Object>> threads = new ArrayList<Callable<Object>>();
 		for (int i=0;i<THREADNUM;i++) {
 			threads.add(new Callable<Object>() {
@@ -622,13 +627,9 @@ public class Starburst extends JDesktopPane {
 		} catch (InterruptedException e) {
 			throw new RuntimeException(e);
 		}
-		if(properties.getAsDouble("probabilityOfInclusion") < 1) {
-			finalizePixels(properties.getSubproperty(String.class, "finalizationMethod"));
-		}
-		operations.clear();
 	}
 
-	private void finalizePixels(Property<? extends String> how) {
+	private void finalizeImage(Property<? extends String> how) {
 		if(how.getValue().equals("Squares then loop (x,y)")) {
 			new SquareFinalizer(this).finalizeImage(how);
 		} else if(how.getValue().equals("Loop (x,y)")) {
@@ -637,6 +638,8 @@ public class Starburst extends JDesktopPane {
 			new SolidFinalizer(this).finalizeImage(how);
 		} else if(how.getValue().equals("Redo from point")) {
 			new RegenFinalizer(this).finalizeImage(how);
+		} else if(how.getValue().equals("Generate from outsides of holes")) {
+			new GenerateFromOutsidesOfHolesFinalizer(this).finalizeImage(how);
 		} else {
 			throw new IllegalArgumentException("Don't know how to finalize by "+how);
 		}
