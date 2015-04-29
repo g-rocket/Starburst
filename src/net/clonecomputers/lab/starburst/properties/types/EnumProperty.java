@@ -17,7 +17,7 @@ public class EnumProperty extends AbstractProperty<String> implements PropertyTr
 	private final Random r;
 	private final String[] values;
 	private final Map<String, Map<String, PropertyTreeNode>> subproperties;
-	private JComboBox<String> valueMenu;
+	private JComboBox valueMenu;
 	private JPanel centerPanel;
 	
 	public EnumProperty(String name, String category, JsonObject data, Random r, String path, PropertyManager pm) {
@@ -150,7 +150,7 @@ public class EnumProperty extends AbstractProperty<String> implements PropertyTr
 
 	@Override
 	protected JComponent createPropertyPanel() {
-		valueMenu = new JComboBox<String>(values);
+		valueMenu = new JComboBox(values);
 		valueMenu.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
