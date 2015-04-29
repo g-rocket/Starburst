@@ -3,8 +3,8 @@ package net.clonecomputers.lab.starburst;
 import static java.lang.Math.*;
 import static net.clonecomputers.lab.starburst.util.StaticUtils.*;
 
-import java.awt.Dialog.ModalityType;
 import java.awt.*;
+import java.awt.Dialog.ModalityType;
 import java.awt.event.*;
 import java.awt.image.*;
 import java.io.*;
@@ -573,8 +573,10 @@ public class Starburst extends JDesktopPane {
 		pixels[i+1]=green(c);
 		pixels[i+2]=blue(c);
 		if(properties.getAsBoolean("renderDuringGeneration")) {
-			canvas.setRGB((int)x, (int)y, c);
-			this.repaint((int)x, (int)y, 1, 1);
+			canvas.setRGB(x, y, c);
+			Graphics g = getGraphics();
+			g.setColor(new Color(c));
+			g.drawLine(x, y, x, y);
 		}
 	}
 
