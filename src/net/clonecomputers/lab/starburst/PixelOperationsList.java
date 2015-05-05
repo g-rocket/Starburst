@@ -61,7 +61,7 @@ public class PixelOperationsList {
 		if(!hasPoint()) return null;
 		Pair retval = null;
 		double removePoint = removeOrderBias==0? 0: pow(myRandom.nextDouble(), log(removeOrderBias)/log(.5));
-		int removeIndex = wrap(start + (int)(removePoint * length()));
+		int removeIndex = wrap(start + (int)(removePoint * (length() - 1)));
 		retval = operations[removeIndex];
 		int replaceIndex = wrap(removePoint < .5? start++: --end);
 		operations[removeIndex] = operations[replaceIndex];
