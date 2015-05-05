@@ -615,19 +615,23 @@ public class Starburst extends JDesktopPane {
 	}
 
 	public void generateImage() {
-		List<Callable<Object>> threads = new ArrayList<Callable<Object>>();
-		for (int i=0;i<THREADNUM;i++) {
-			threads.add(new Callable<Object>() {
-				public Object call() throws Exception {
-					fillAllPixels();
-					return null;
-				}
-			});
-		}
-		try {
-			exec.invokeAll(threads);
-		} catch (InterruptedException e) {
-			throw new RuntimeException(e);
+		if(properties.getAsBoolean("multithreaded")) {
+			List<Callable<Object>> threads = new ArrayList<Callable<Object>>();
+			for (int i=0;i<THREADNUM;i++) {
+				threads.add(new Callable<Object>() {
+					public Object call() throws Exception {
+						fillAllPixels();
+						return null;
+					}
+				});
+			}
+			try {
+				exec.invokeAll(threads);
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
+			}
+		} else {
+			fillAllPixels();
 		}
 	}
 

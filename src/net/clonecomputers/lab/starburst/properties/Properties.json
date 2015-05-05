@@ -181,5 +181,12 @@
 		"saved": false,
 		"random": false,
 		"initialValue": true
+	},
+	"Multithreaded": {
+		"category": "General",
+		"type": "boolean",
+		"saved": false,
+		"random": false,
+		"initialValue": true
 	}
 }
