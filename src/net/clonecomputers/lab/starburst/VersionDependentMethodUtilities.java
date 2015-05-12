@@ -86,11 +86,11 @@ public class VersionDependentMethodUtilities {
 		window.setVisible(true);
 	}
 
-	public static void enableFullscreen(JFrame window, GraphicsDevice gd) {
-		enableFullscreen(window, gd, false);
+	public static void enableFullscreen(JFrame window) {
+		enableFullscreen(window, false);
 	}
 	
-	public static void enableFullscreen(final JFrame window, final GraphicsDevice gd, final boolean useExclusiveFullscreen) {
+	public static void enableFullscreen(final JFrame window, final boolean useExclusiveFullscreen) {
 		window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		if(appleEawtAvailable() && 
 				appleOSVersion() >= 7 && // lion and above
@@ -103,6 +103,7 @@ public class VersionDependentMethodUtilities {
 			public void keyReleased(KeyEvent e) {
 				if(e.getKeyCode() == KeyEvent.VK_F11) {
 					e.consume();
+					GraphicsDevice gd = getScreen(window);
 					window.setVisible(false); // hide, so we can do stuff
 					if(window.isUndecorated()) { // we are fullscreen, we should become unfullscreen
 						window.setUndecorated(false);
@@ -127,6 +128,14 @@ public class VersionDependentMethodUtilities {
 				}
 			}
 		});
+	}
+	
+	private static GraphicsDevice getScreen(JFrame window) {
+		for(GraphicsDevice gd: GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()) {
+			if(gd.getDefaultConfiguration().getBounds().contains(window.getLocationOnScreen())) return gd;
+		}
+		System.err.println(window+" does not appear to be on any screen; fullscreening onto default screen");
+		return GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
 	}
 
 	@SuppressWarnings("restriction")

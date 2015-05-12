@@ -109,8 +109,8 @@ public class PropertyManager {
 			public void actionPerformed(ActionEvent e) {
 				Component window = SwingUtilities.getAncestorOfClass(RootPaneContainer.class, changeDialog);
 				window.setVisible(false);
-				synchronized (PropertyManager.this) {
-					PropertyManager.this.notifyAll();
+				synchronized (changeDialog) {
+					changeDialog.notifyAll();
 				}
 			}
 		});
@@ -127,8 +127,8 @@ public class PropertyManager {
 				}
 				Component window = SwingUtilities.getAncestorOfClass(RootPaneContainer.class, changeDialog);
 				window.setVisible(false);
-				synchronized (PropertyManager.this) {
-					PropertyManager.this.notifyAll();
+				synchronized (changeDialog) {
+					changeDialog.notifyAll();
 				}
 			}
 		});

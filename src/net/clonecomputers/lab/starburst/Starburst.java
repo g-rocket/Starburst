@@ -40,51 +40,10 @@ public class Starburst extends JDesktopPane {
 	public static void main(final String[] args) throws InterruptedException, InvocationTargetException {
 		SwingUtilities.invokeAndWait(new Runnable(){
 			@Override public void run(){
-				GraphicsDevice[] screens = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
-				GraphicsDevice biggestScreen = null;
-				int maxPixelsSoFar = 0;
-				for(GraphicsDevice screen: screens){ // find biggest screen
-					DisplayMode d = screen.getDisplayMode();
-					if(d.getWidth() * d.getHeight() > maxPixelsSoFar){
-						biggestScreen = screen;
-						maxPixelsSoFar = d.getWidth() * d.getHeight();
-					}
-				}
-				DisplayMode d = biggestScreen.getDisplayMode();
+				Map<String, Object> flags = getArgs(args);
 				JFrame window = new JFrame();
 				Dimension size;
-				int howManyNumbers = 0;
-				String[] dims = new String[2];
-				int howManyArgs = 0;
-				String[] tmp = new String[args.length];
-				for(int i = 0; i < args.length; i++) {
-					if(isInt(args[i])) {
-						dims[howManyNumbers++] = args[i];
-					} else {
-						tmp[howManyArgs++] = args[i];
-					}
-				}
-				String[] args2 = new String[howManyArgs];
-				System.arraycopy(tmp, 0, args, 0, howManyArgs);
-				Arrays.sort(args2);
-				switch(howManyNumbers) {
-				case 0:
-					size = new Dimension(d.getWidth(), d.getHeight());
-					break;
-				case 1:
-					size = new Dimension(
-							Integer.parseInt(dims[0].split(",")[0].trim()),
-							Integer.parseInt(dims[0].split(",")[1].trim()));
-					break;
-				case 2:
-					size = new Dimension(
-							Integer.parseInt(dims[0].trim()),
-							Integer.parseInt(dims[1].trim()));
-					break;
-				default:
-					throw new IllegalArgumentException("too many numbers");
-				}
-				if(Arrays.binarySearch(args2, "inputdims") > 0) {
+				if(flags.containsKey("input") || flags.containsKey("i")) {
 					System.out.println("Input dimensions");
 					BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 					String arg0;
@@ -110,11 +69,26 @@ public class Starburst extends JDesktopPane {
 					} else {
 						throw new IllegalArgumentException("Invalid dimensions");
 					}
+				} else if(flags.containsKey("size") || flags.containsKey("s")) {
+					int[] sizeia = (int[])(flags.containsKey("size")? flags.get("size"): flags.get("s"));
+					size = new Dimension(sizeia[0], sizeia[1]);
+				} else if(flags.containsKey("width") || flags.containsKey("w")) {
+					int width = (Integer)(flags.containsKey("width")? flags.get("width"): flags.get("w"));
+					int height = (Integer)(flags.containsKey("height")? flags.get("height"): flags.get("h"));
+					size = new Dimension(width, height);
+				} else if(((String[])flags.get("args")).length == 2) {
+					String[] args = (String[])flags.get("args");
+					size = new Dimension(Integer.parseInt(args[0]), Integer.parseInt(args[1]));
+				} else if(((String[])flags.get("args")).length == 1) {
+					String[] args = ((String[])flags.get("args"))[0].split(",");
+					size = new Dimension(Integer.parseInt(args[0]), Integer.parseInt(args[1]));
+				} else {
+					size = getSizeOfBiggestScreen();
 				}
 				Starburst s = new Starburst(size);
 				s.setupKeyAndClickListeners(window);
 				window.setContentPane(s);
-				VersionDependentMethodUtilities.enableFullscreen(window,biggestScreen,false);
+				VersionDependentMethodUtilities.enableFullscreen(window,false);
 				window.setVisible(true);
 				window.setSize(size);
 				s.asyncNewImage();
@@ -122,6 +96,82 @@ public class Starburst extends JDesktopPane {
 		});
 	}
 
+	private static Map<String, Object> getArgs(String[] args) {
+		List<String> normalArgs = new ArrayList<String>();
+		Map<String, Object> flags = new HashMap<String, Object>();
+		for(int i = 0; i < args.length; i++) {
+			if(args[i].startsWith("-")) {
+				if(args[i].charAt(1) == '-') {
+					int equalsPos = args[i].indexOf('=');
+					if(equalsPos == -1) {
+						flags.put(args[i].substring(2), null); // null indicates no value
+					} else {
+						flags.put(args[i].substring(2, equalsPos), parseValue(args[i].substring(equalsPos+1)));
+					}
+				} else {
+					if(args[i+1].startsWith("-")) {
+						flags.put(args[i].substring(1), null); // null indicates no value
+					} else {
+						flags.put(args[i].substring(1), parseValue(args[i++]));
+					}
+				}
+			} else {
+				normalArgs.add(args[i]);
+			}
+		}
+		flags.put("args", normalArgs.toArray(new String[0]));
+		return flags;
+	}
+
+	private static Object parseValue(String val) {
+		try {
+			return Integer.parseInt(val);
+		} catch(NumberFormatException nfe) {
+			// not an int
+		}
+		try {
+			return Double.parseDouble(val);
+		} catch(NumberFormatException nfe) {
+			// not a double
+		}
+		if(val.contains(",")) {
+			String[] vals = val.split(",");
+			try {
+				int[] retval = new int[vals.length];
+				for(int i = 0; i < vals.length; i++) {
+					retval[i] = Integer.parseInt(vals[i]);
+				}
+			} catch(NumberFormatException nfe) {
+				// not an array of ints
+			}
+			try {
+				double[] retval = new double[vals.length];
+				for(int i = 0; i < vals.length; i++) {
+					retval[i] = Double.parseDouble(vals[i]);
+				}
+			} catch(NumberFormatException nfe) {
+				// not an array of doubles
+			}
+			return vals;
+		}
+		return val;
+	}
+
+	private static Dimension getSizeOfBiggestScreen() {
+		GraphicsDevice[] screens = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
+		GraphicsDevice biggestScreen = null;
+		int maxPixelsSoFar = 0;
+		for(GraphicsDevice screen: screens){ // find biggest screen
+			DisplayMode d = screen.getDisplayMode();
+			if(d.getWidth() * d.getHeight() > maxPixelsSoFar){
+				biggestScreen = screen;
+				maxPixelsSoFar = d.getWidth() * d.getHeight();
+			}
+		}
+		DisplayMode d = biggestScreen.getDisplayMode();
+		return new Dimension(d.getWidth(), d.getHeight());
+	}
+	
 	private static boolean isInt(String arg) {
 		for(char c: arg.toCharArray()) {
 			if(c < '0' || c > '9') return false;
@@ -171,19 +221,23 @@ public class Starburst extends JDesktopPane {
 	}
 
 	public Starburst(int w,int h){
-		canvas = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
-		this.setPreferredSize(new Dimension(w,h));
-		operations = new PixelOperationsList(w,h);
 		propertyManager = new PropertyManager();
 		properties = propertyManager.rootNode();
-		properties.set("size.width", w);
-		properties.set("size.height",h);
-		current = new boolean[canvas.getWidth()][canvas.getHeight()];
-		centerPair = new Pair(canvas.getWidth()/2, canvas.getHeight()/2);
+		setSize(w, h);
 	}
 
 	public Starburst(Dimension size) {
 		this(size.width, size.height);
+	}
+	
+	public void setSize(int w, int h) {
+		properties.set("size.width", w);
+		properties.set("size.height",h);
+		canvas = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+		this.setPreferredSize(new Dimension(w,h));
+		operations = new PixelOperationsList(w,h);
+		current = new boolean[canvas.getWidth()][canvas.getHeight()];
+		centerPair = new Pair(canvas.getWidth()/2, canvas.getHeight()/2);
 	}
 
 	private void genMany(String outputDirectory, int howMany) {
@@ -354,7 +408,9 @@ public class Starburst extends JDesktopPane {
 		changeFrame.setVisible(true);
 		synchronized (changeDialog) {
 			try {
+				System.out.println("waiting for changeDialog to close");
 				changeDialog.wait();
+				System.out.println("done!");
 			} catch (InterruptedException e) {
 				throw new RuntimeException(e);
 			}
@@ -362,8 +418,8 @@ public class Starburst extends JDesktopPane {
 		operations.setRemoveOrderBias(properties.getAsDouble("removeOrderBias"));
 		if(properties.getAsInt("size.width") != canvas.getWidth() ||
 		   properties.getAsInt("size.height") != canvas.getHeight()) {
-			canvas = new BufferedImage(
-					properties.getAsInt("size.width"), properties.getAsInt("size.height"), BufferedImage.TYPE_INT_RGB);
+			setSize(properties.getAsInt("size.width"), properties.getAsInt("size.height"));
+			System.out.println("set size to ("+properties.getAsInt("size.width")+","+properties.getAsInt("size.height")+")");
 		}
 	}
 	
