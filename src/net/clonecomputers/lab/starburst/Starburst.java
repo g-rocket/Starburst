@@ -41,6 +41,7 @@ public class Starburst extends JDesktopPane {
 		SwingUtilities.invokeAndWait(new Runnable(){
 			@Override public void run(){
 				Map<String, Object> flags = getArgs(args);
+				System.out.println(flags);
 				JFrame window = new JFrame();
 				Dimension size;
 				if(flags.containsKey("input") || flags.containsKey("i")) {
@@ -91,7 +92,7 @@ public class Starburst extends JDesktopPane {
 				VersionDependentMethodUtilities.enableFullscreen(window,false);
 				window.setVisible(true);
 				window.setSize(size);
-				s.asyncNewImage();
+				if(!(flags.containsKey("nonewimage"))) s.asyncNewImage();
 			}
 		});
 	}
@@ -112,7 +113,7 @@ public class Starburst extends JDesktopPane {
 					if(args[i+1].startsWith("-")) {
 						flags.put(args[i].substring(1), null); // null indicates no value
 					} else {
-						flags.put(args[i].substring(1), parseValue(args[i++]));
+						flags.put(args[i].substring(1), parseValue(args[++i]));
 					}
 				}
 			} else {
@@ -125,13 +126,15 @@ public class Starburst extends JDesktopPane {
 
 	private static Object parseValue(String val) {
 		try {
-			return Integer.parseInt(val);
+			return Integer.parseInt(val.trim());
 		} catch(NumberFormatException nfe) {
+			System.out.println("Not an int: '"+val.trim()+"'");
 			// not an int
 		}
 		try {
-			return Double.parseDouble(val);
+			return Double.parseDouble(val.trim());
 		} catch(NumberFormatException nfe) {
+			System.out.println("Not a double: '"+val.trim()+"'");
 			// not a double
 		}
 		if(val.contains(",")) {
@@ -139,7 +142,7 @@ public class Starburst extends JDesktopPane {
 			try {
 				int[] retval = new int[vals.length];
 				for(int i = 0; i < vals.length; i++) {
-					retval[i] = Integer.parseInt(vals[i]);
+					retval[i] = Integer.parseInt(vals[i].trim());
 				}
 			} catch(NumberFormatException nfe) {
 				// not an array of ints
@@ -147,7 +150,7 @@ public class Starburst extends JDesktopPane {
 			try {
 				double[] retval = new double[vals.length];
 				for(int i = 0; i < vals.length; i++) {
-					retval[i] = Double.parseDouble(vals[i]);
+					retval[i] = Double.parseDouble(vals[i].trim());
 				}
 			} catch(NumberFormatException nfe) {
 				// not an array of doubles
