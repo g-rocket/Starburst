@@ -128,13 +128,11 @@ public class Starburst extends JDesktopPane {
 		try {
 			return Integer.parseInt(val.trim());
 		} catch(NumberFormatException nfe) {
-			System.out.println("Not an int: '"+val.trim()+"'");
 			// not an int
 		}
 		try {
 			return Double.parseDouble(val.trim());
 		} catch(NumberFormatException nfe) {
-			System.out.println("Not a double: '"+val.trim()+"'");
 			// not a double
 		}
 		if(val.contains(",")) {
