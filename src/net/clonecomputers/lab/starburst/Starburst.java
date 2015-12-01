@@ -110,7 +110,7 @@ public class Starburst extends JDesktopPane {
 						flags.put(args[i].substring(2, equalsPos), parseValue(args[i].substring(equalsPos+1)));
 					}
 				} else {
-					if(args[i+1].startsWith("-")) {
+					if(i+1 >= args.length || args[i+1].startsWith("-")) {
 						flags.put(args[i].substring(1), null); // null indicates no value
 					} else {
 						flags.put(args[i].substring(1), parseValue(args[++i]));
