@@ -406,16 +406,9 @@ public class Starburst extends JDesktopPane {
 		changeFrame.pack();
 		//this.add(changeFrame, JLayeredPane.MODAL_LAYER);
 		changeFrame.setLocation(this.getWidth()/2 - changeFrame.getWidth()/2, this.getHeight()/2 - changeFrame.getHeight()/2);
+		System.out.println("waiting for changeDialog to close");
 		changeFrame.setVisible(true);
-		synchronized (changeDialog) {
-			try {
-				System.out.println("waiting for changeDialog to close");
-				changeDialog.wait();
-				System.out.println("done!");
-			} catch (InterruptedException e) {
-				throw new RuntimeException(e);
-			}
-		}
+		System.out.println("done!");
 		operations.setRemoveOrderBias(properties.getAsDouble("removeOrderBias"));
 		if(properties.getAsInt("size.width") != canvas.getWidth() ||
 		   properties.getAsInt("size.height") != canvas.getHeight()) {
