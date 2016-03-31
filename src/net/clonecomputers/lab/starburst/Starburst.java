@@ -42,7 +42,6 @@ public class Starburst extends JDesktopPane {
 			@Override public void run(){
 				Map<String, Object> flags = getArgs(args);
 				System.out.println(flags);
-				JFrame window = new JFrame();
 				Dimension size;
 				if(flags.containsKey("input") || flags.containsKey("i")) {
 					System.out.println("Input dimensions");
@@ -87,6 +86,13 @@ public class Starburst extends JDesktopPane {
 					size = getSizeOfBiggestScreen();
 				}
 				Starburst s = new Starburst(size);
+				if(flags.containsKey("many") || flags.containsKey("m")) {
+					int howMany = (Integer)(flags.containsKey("many")? flags.get("many"): flags.get("m"));
+					s.properties.set("renderDuringGeneration", false);
+					s.genMany(".", howMany);
+					return;
+				}
+				JFrame window = new JFrame();
 				s.setupKeyAndClickListeners(window);
 				window.setContentPane(s);
 				VersionDependentMethodUtilities.enableFullscreen(window,false);
