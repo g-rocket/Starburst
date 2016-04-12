@@ -91,7 +91,7 @@ public class LineSeeder extends Seeder {
 				b=255-1;
 				rb=-rb;
 			}
-			if (colorScheme.equals("Varying")) c = color((int)r,(int)g,(int)b);
+			if (colorScheme.getValue().equalsIgnoreCase("Varying")) c = color((int)r,(int)g,(int)b);
 			s.current[(int)x][(int)y] = true;
 			s.setPixel((int)x, (int)y, c);
 		}
