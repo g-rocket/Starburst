@@ -178,13 +178,6 @@ public class Starburst extends JDesktopPane {
 		DisplayMode d = biggestScreen.getDisplayMode();
 		return new Dimension(d.getWidth(), d.getHeight());
 	}
-	
-	private static boolean isInt(String arg) {
-		for(char c: arg.toCharArray()) {
-			if(c < '0' || c > '9') return false;
-		}
-		return true;
-	}
 
 	public void setupKeyAndClickListeners(JFrame window) {
 		// consume System.in and redirect it to key listener
