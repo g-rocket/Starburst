@@ -27,21 +27,14 @@ public abstract class AbstractNumberProperty<T extends Number> extends AbstractP
 	public AbstractNumberProperty(String name, String category, JsonObject data, Random r) {
 		super(name, category, data);
 		if(data.has("range")) {
-			JsonElement jmin = data.get("range").getAsJsonArray().get(0);
-			JsonElement jmax = data.get("range").getAsJsonArray().get(1);
-			if(jmin.getAsJsonPrimitive().isString() && jmin.getAsString().equalsIgnoreCase("-Infinity")) {
-				min = Double.NEGATIVE_INFINITY;
-			} else {
-				min = jmin.getAsDouble();
-			}
-			if(jmax.getAsJsonPrimitive().isString() && jmax.getAsString().equalsIgnoreCase("Infinity")) {
-				max = Double.POSITIVE_INFINITY;
-			} else {
-				max = jmax.getAsDouble();
-			}
+			min = jsonToDouble(data.get("range").getAsJsonArray().get(0).getAsJsonPrimitive());
+			max = jsonToDouble(data.get("range").getAsJsonArray().get(1).getAsJsonPrimitive());
 		} else {
 			min = Double.NEGATIVE_INFINITY;
 			max = Double.POSITIVE_INFINITY;
+		}
+		if(min > max) {
+			throw new IllegalArgumentException("Min ("+min+") > Max ("+max+")");
 		}
 		if(isDiscrete) {
 			if((!Double.isInfinite(max) && max != Math.round(max)) ||

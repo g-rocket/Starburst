@@ -6,7 +6,7 @@
 			"Points": {
 				"How many": {
 					"type": "int",
-					"range": [0, "Infinity"],
+					"range": [0, "Inf"],
 					"slider": [1,20]
 				},
 				"Distribution": {
@@ -21,7 +21,7 @@
 				"Distribution": {
 					"Length": {
 						"type": "int",
-						"range": [0, "Infinity"],
+						"range": [0, "Inf"],
 						"slider": [0,5000],
 						"random": {
 							"type": "gaussian",
@@ -36,8 +36,7 @@
 						"range": [0, 1],
 						"slider": {
 							"type": "biased",
-							"range": [0,1],
-							"bias": 0.00333
+							"bias": 0.1
 						},
 						"random": {
 							"type": "biased",
@@ -78,22 +77,21 @@
 		"category": "Pixel generation",
 		"Red Bias": {
 			"type": "double",
-			"range": ["-Infinity", "Infinity"]
+			"range": ["-Inf", "Inf"]
 		},
 		"Green Bias": {
 			"type": "double",
-			"range": ["-Infinity", "Infinity"]
+			"range": ["-Inf", "Inf"]
 		},
 		"Blue Bias": {
 			"type": "double",
-			"range": ["-Infinity", "Infinity"]
+			"range": ["-Inf", "Inf"]
 		}
 	},
 	"Center bias": {
 		"category": "Pixel generation",
 		"type": "double",
-		"range": [0, "Infinity"],
-		"slider": [0,20]
+		"range": [0, "Inf"]
 	},
 	"Remove order bias": {
 		"category": "Pixel generation",
@@ -138,8 +136,7 @@
 					"range": [0, 1],
 					"slider": {
 						"type": "biased",
-						"range": [0,1],
-						"bias": 0.01
+						"bias": 0.1
 					},
 					"random": {
 						"type": "biased",
@@ -164,13 +161,13 @@
 		"category": "General",
 		"Width": {
 			"type": "int",
-			"range": [0, "Infinity"],
+			"range": [0, "Inf"],
 			"random": false,
 			"slider": false
 		},
 		"Height": {
 			"type": "int",
-			"range": [0, "Infinity"],
+			"range": [0, "Inf"],
 			"random": false,
 			"slider": false
 		}
