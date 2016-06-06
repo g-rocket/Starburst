@@ -12,6 +12,7 @@ import javax.swing.*;
 
 import net.clonecomputers.lab.starburst.*;
 import net.clonecomputers.lab.starburst.properties.types.*;
+import net.clonecomputers.lab.starburst.util.*;
 import ar.com.hjg.pngj.chunks.*;
 
 import com.google.gson.*;

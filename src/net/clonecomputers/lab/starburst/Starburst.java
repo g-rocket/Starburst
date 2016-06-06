@@ -19,6 +19,7 @@ import javax.swing.*;
 import net.clonecomputers.lab.starburst.finalize.*;
 import net.clonecomputers.lab.starburst.properties.*;
 import net.clonecomputers.lab.starburst.seed.*;
+import net.clonecomputers.lab.starburst.util.*;
 import ar.com.hjg.pngj.*;
 import ar.com.hjg.pngj.chunks.*;
 

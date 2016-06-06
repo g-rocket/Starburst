@@ -1,4 +1,4 @@
-package net.clonecomputers.lab.starburst;
+package net.clonecomputers.lab.starburst.util;
 
 import java.awt.*;
 import java.awt.event.*;
