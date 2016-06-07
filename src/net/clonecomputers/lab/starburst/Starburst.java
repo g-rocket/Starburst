@@ -395,7 +395,21 @@ public class Starburst extends JDesktopPane {
 
 	@Override public void paintComponent(Graphics g){
 		super.paintComponent(g);
-		g.drawImage(canvas, 0, 0, this);
+		Graphics2D g2 = (Graphics2D) g;
+		double scaleFactor = getScaleFactor();
+		g2.scale(scaleFactor, scaleFactor);
+		g2.drawImage(canvas, 0, 0, this);
+	}
+	
+	private double getScaleFactor() {
+		String scaleProp = properties.getAsString("scaling");
+		if(scaleProp.equalsIgnoreCase("1x")) return 1;
+		if(scaleProp.equalsIgnoreCase("2x")) return 0.5;
+		if(scaleProp.equalsIgnoreCase("other")) return properties.getAsDouble("scaling.other");
+		if(scaleProp.equalsIgnoreCase("Scale to fit")) {
+			return Math.min(getWidth() / (double)canvas.getWidth(), getHeight() / (double)canvas.getHeight());
+		}
+		throw new IllegalArgumentException("Invalid scaling setting: "+scaleProp);
 	}
 
 	private void setParams() {
@@ -624,8 +638,10 @@ public class Starburst extends JDesktopPane {
 		pixels[i+2]=blue(c);
 		if(properties.getAsBoolean("renderDuringGeneration")) {
 			canvas.setRGB(x, y, c);
-			Graphics g = getGraphics();
+			Graphics2D g = (Graphics2D) getGraphics();
 			g.setColor(new Color(c));
+			double scaleFactor = getScaleFactor();
+			g.scale(scaleFactor, scaleFactor);
 			g.drawLine(x, y, x, y);
 		}
 	}

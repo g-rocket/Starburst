@@ -185,5 +185,25 @@
 		"saved": false,
 		"random": false,
 		"initialValue": true
+	},
+	"Scaling": {
+		"category": "General",
+		"type": "enum",
+		"values": {
+			"1x": {},
+			"2x": {},
+			"Scale to Fit": {},
+			"Other": {
+				"scale": {
+					"type": "double",
+					"range": [0, "Inf"],
+					"random": false,
+					"initialValue": 1
+				}
+			}
+		},
+		"random": false,
+		"saved": false,
+		"initialValue": "1x"
 	}
 }

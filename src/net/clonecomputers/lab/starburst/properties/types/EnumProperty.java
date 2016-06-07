@@ -34,6 +34,7 @@ public class EnumProperty extends AbstractProperty<String> implements PropertyTr
 		this.values = values.toArray(new String[0]);
 		this.r = r;
 		finishConstruction();
+		if(data.has("initialValue")) setValue(data.get("initialValue").getAsString());
 	}
 
 	public EnumProperty(String name, String category, Map<String, Map<String, PropertyTreeNode>> values, boolean shouldRandomize, Random r) {
