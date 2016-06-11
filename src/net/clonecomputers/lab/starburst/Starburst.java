@@ -535,45 +535,26 @@ public class Starburst extends JDesktopPane {
 		return i;
 	}
 
-	private File chooseFile(int dialogType, int selectionMode) {
-		final JInternalFrame fcFrame = new JInternalFrame();
-		fcFrame.putClientProperty("JInternalFrame.frameType", "optionDialog");
-		final boolean[] wasCanceled = new boolean[1];
+	private File chooseFile(final int dialogType, final int selectionMode) {
 		final JFileChooser fc = new JFileChooser();
-		fc.setFileSelectionMode(selectionMode);
-		fc.setDialogType(dialogType);
-		fc.setMultiSelectionEnabled(false);
-		fc.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				String cmd = e.getActionCommand();
-				if (JFileChooser.CANCEL_SELECTION.equals(cmd)) {
-					fcFrame.setVisible(false);
-					wasCanceled[0] = true;
-					synchronized(fc) {
-						fc.notifyAll();
-					}
-				} else if (JFileChooser.APPROVE_SELECTION.equals(cmd)) {
-					fcFrame.setVisible(false);
-					wasCanceled[0] = false;
-					synchronized(fc) {
-						fc.notifyAll();
-					}
+		try {
+			SwingUtilities.invokeAndWait(new Runnable() {
+				@Override
+				public void run() {
+					fc.setCurrentDirectory(new java.io.File("."));
+					fc.setFileSelectionMode(selectionMode);
+					fc.setDialogType(dialogType);
+					fc.setMultiSelectionEnabled(false);
+					
+					fc.showDialog(Starburst.this, null);
 				}
-			}
-		});
-		fcFrame.add(fc);
-		fcFrame.pack();
-		this.add(fcFrame, JLayeredPane.MODAL_LAYER);
-		fcFrame.setLocation(this.getWidth()/2 - fcFrame.getWidth()/2, this.getHeight()/2 - fcFrame.getHeight()/2);
-		fcFrame.setVisible(true);
-		synchronized (fc) {
-			try {
-				fc.wait();
-			} catch (InterruptedException e1) {
-				return null;
-			}
+			});
+		} catch (InvocationTargetException e) {
+			throw new RuntimeException(e);
+		} catch (InterruptedException e) {
+			throw new RuntimeException(e);
 		}
-		if(wasCanceled[0]) return null;
+		
 		return fc.getSelectedFile();
 	}
 
@@ -643,6 +624,15 @@ public class Starburst extends JDesktopPane {
 			double scaleFactor = getScaleFactor();
 			g.scale(scaleFactor, scaleFactor);
 			g.drawLine(x, y, x, y);
+//			g.drawImage(canvas, 
+//					((int)(x*scaleFactor)), 
+//					((int)(y*scaleFactor)), 
+//					((int)(x*scaleFactor)+1), 
+//					((int)(y*scaleFactor)+1), 
+//					(int)((((int)(x*scaleFactor)))/scaleFactor), 
+//					(int)((((int)(y*scaleFactor)))/scaleFactor), 
+//					(int)((((int)(x*scaleFactor))+1)/scaleFactor), 
+//					(int)((((int)(y*scaleFactor))+1)/scaleFactor), this);
 		}
 	}
 
