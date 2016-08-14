@@ -699,15 +699,16 @@ public class Starburst extends JDesktopPane {
 				for(Future<Object> f: futures) {
 					i++;
 					final int j = i;
+					final Future<Object> ff = f;
 					threads.add(new Callable<Object>(){
 						@Override
 						public Object call() throws Exception {
-							while(!f.isDone()) {
+							while(!ff.isDone()) {
 								System.out.println(j+"is not done");
 								Thread.sleep(100);
 							}
 							System.out.println(j+" is done!");
-							f.get();
+							ff.get();
 							System.out.println(j+" is really done!");
 							return null;
 						}
