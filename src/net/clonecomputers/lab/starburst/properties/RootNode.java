@@ -6,9 +6,11 @@ import javax.swing.*;
 
 public class RootNode extends AbstractPropertyTreeNode0 implements PropertyTreeNode {
 	private Map<String, PropertyTreeNode> subproperties;
+	private Map<String, PropertyTreeNode> deepSubpropertyCache;
 
 	public RootNode(Map<String, PropertyTreeNode> subproperties) {
 		this.subproperties = subproperties;
+		this.deepSubpropertyCache = new HashMap<String, PropertyTreeNode>();
 	}
 
 	@Override
@@ -64,6 +66,15 @@ public class RootNode extends AbstractPropertyTreeNode0 implements PropertyTreeN
 		}
 		sb.append("}\n");
 		return sb.toString();
+	}
+
+	@Override
+	public PropertyTreeNode getSubproperty(String name) {
+		if(!deepSubpropertyCache.containsKey(name)) {
+			deepSubpropertyCache.put(name, super.getSubproperty(name));
+		}
+		
+		return deepSubpropertyCache.get(name);
 	}
 
 }

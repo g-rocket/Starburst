@@ -6,7 +6,7 @@ public abstract class AbstractPropertyTreeNode0 implements PropertyTreeNode {
 	@Override
 	public PropertyTreeNode getSubproperty(String name) {
 		PropertyTreeNode node = this;
-		for(String nextNodeName: name.split("[.]")) {
+		for(String nextNodeName: name.split("\\.")) {
 			node = node.subproperties().get(nextNodeName);
 		}
 		return node;

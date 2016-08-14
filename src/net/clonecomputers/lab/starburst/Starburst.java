@@ -375,15 +375,15 @@ public class Starburst extends JDesktopPane {
 	}
 
 	private void loadPixels() {
-		System.out.println(Runtime.getRuntime().freeMemory());
-		if(Runtime.getRuntime().freeMemory() < canvas.getWidth()*canvas.getHeight() * 4) {
-			System.out.print("Freeing Memory ... ");
-			pixels = null;
-			Runtime.getRuntime().gc();
-			System.out.println(Runtime.getRuntime().freeMemory());
-		}
+//		System.out.println(Runtime.getRuntime().freeMemory());
+//		if(Runtime.getRuntime().freeMemory() < canvas.getWidth()*canvas.getHeight() * 4) {
+//			System.out.print("Freeing Memory ... ");
+//			pixels = null;
+//			Runtime.getRuntime().gc();
+//			System.out.println(Runtime.getRuntime().freeMemory());
+//		}
 		try {
-			pixels = canvas.getRaster().getPixels(0, 0, canvas.getWidth(), canvas.getHeight(), (int[])null);
+			pixels = canvas.getRaster().getPixels(0, 0, canvas.getWidth(), canvas.getHeight(), pixels);
 		} catch(OutOfMemoryError oom) {
 			System.out.print("Freeing Memory ... ");
 			pixels = null;
@@ -413,22 +413,30 @@ public class Starburst extends JDesktopPane {
 	}
 
 	private void setParams() {
-		JComponent changeDialog = propertyManager.getChangeDialog();
-		final JDialog changeFrame = new JDialog();
-		changeFrame.setModalityType(ModalityType.APPLICATION_MODAL);
-		changeFrame.setContentPane(changeDialog);
-		changeFrame.pack();
-		//this.add(changeFrame, JLayeredPane.MODAL_LAYER);
-		changeFrame.setLocation(this.getWidth()/2 - changeFrame.getWidth()/2, this.getHeight()/2 - changeFrame.getHeight()/2);
-		System.out.println("waiting for changeDialog to close");
-		changeFrame.setVisible(true);
-		System.out.println("done!");
-		operations.setRemoveOrderBias(properties.getAsDouble("removeOrderBias"));
-		if(properties.getAsInt("size.width") != canvas.getWidth() ||
-		   properties.getAsInt("size.height") != canvas.getHeight()) {
-			setSize(properties.getAsInt("size.width"), properties.getAsInt("size.height"));
-			System.out.println("set size to ("+properties.getAsInt("size.width")+","+properties.getAsInt("size.height")+")");
-		}
+		SwingUtilities.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				JComponent changeDialog = propertyManager.getChangeDialog();
+				final JDialog changeFrame = new JDialog();
+				changeFrame.setModalityType(ModalityType.APPLICATION_MODAL);
+				changeFrame.setContentPane(changeDialog);
+				changeFrame.pack();
+				//this.add(changeFrame, JLayeredPane.MODAL_LAYER);
+				changeFrame.setLocation(
+						Starburst.this.getWidth()/2 - changeFrame.getWidth()/2,
+						Starburst.this.getHeight()/2 - changeFrame.getHeight()/2);
+				System.out.println("waiting for changeDialog to close");
+				changeFrame.setVisible(true);
+				System.out.println("done!");
+				operations.setRemoveOrderBias(properties.getAsDouble("removeOrderBias"));
+				if(properties.getAsInt("size.width") != canvas.getWidth() ||
+				   properties.getAsInt("size.height") != canvas.getHeight()) {
+					setSize(properties.getAsInt("size.width"), properties.getAsInt("size.height"));
+					System.out.println("set size to ("+properties.getAsInt("size.width")+","+properties.getAsInt("size.height")+")");
+				}
+			}
+		});
+		
 	}
 	
 	private void keyPressed(char key) {
@@ -573,11 +581,11 @@ public class Starburst extends JDesktopPane {
 					save(output);
 					System.out.println("saved");
 					// Now let's try to fix focus problems
-					Starburst.this.requestFocusInWindow();
-					Starburst.this.requestFocus();
-					if(VersionDependentMethodUtilities.appleEawtAvailable()) {
-						VersionDependentMethodUtilities.appleForeground();
-					}
+//					Starburst.this.requestFocusInWindow();
+//					Starburst.this.requestFocus();
+//					if(VersionDependentMethodUtilities.appleEawtAvailable()) {
+//						VersionDependentMethodUtilities.appleForeground();
+//					}
 				}
 			}
 		});
@@ -645,9 +653,12 @@ public class Starburst extends JDesktopPane {
 	}
 
 	private void fillAllPixels() {
-		while (operations.hasPoint()) {
+		while (true) {
 			Pair myPair = operations.getPoint();
-			if (myPair == null) continue;
+			if(myPair == null) {
+				//if(operations.hasPoint()) continue;
+				break;
+			}
 			int x = myPair.x, y = myPair.y;
 			if (current[x][y]) continue;
 			fillPixel(x, y);
@@ -682,6 +693,26 @@ public class Starburst extends JDesktopPane {
 				});
 			}
 			try {
+				List<Future<Object>> futures = exec.invokeAll(threads);
+				threads.clear();
+				int i = 0;
+				for(Future<Object> f: futures) {
+					i++;
+					final int j = i;
+					threads.add(new Callable<Object>(){
+						@Override
+						public Object call() throws Exception {
+							while(!f.isDone()) {
+								System.out.println(j+"is not done");
+								Thread.sleep(100);
+							}
+							System.out.println(j+" is done!");
+							f.get();
+							System.out.println(j+" is really done!");
+							return null;
+						}
+					});
+				}
 				exec.invokeAll(threads);
 			} catch (InterruptedException e) {
 				throw new RuntimeException(e);

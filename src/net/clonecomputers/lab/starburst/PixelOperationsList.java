@@ -30,7 +30,7 @@ public class PixelOperationsList {
 		return (int)(i % operations.length);
 	}
 	
-	public synchronized void setRemoveOrderBias(double removeOrder) {
+	public void setRemoveOrderBias(double removeOrder) {
 		this.removeOrderBias = removeOrder;
 	}
 	
@@ -38,7 +38,7 @@ public class PixelOperationsList {
 		return removeOrderBias;
 	}
 	
-	public synchronized boolean hasPoint() {
+	public boolean hasPoint() {
 		return start != end;
 	}
 	
@@ -53,12 +53,14 @@ public class PixelOperationsList {
 		}
 	}
 
-	public synchronized void addPoint(int x, int y) {
+	public void addPoint(int x, int y) {
 		addPoint(new Pair(x,y));
 	}
 
 	public synchronized Pair getPoint() {
-		if(!hasPoint()) return null;
+		if(!hasPoint()) {
+			return null;
+		}
 		Pair retval = null;
 		double removePoint = removeOrderBias==0? 0: pow(myRandom.nextDouble(), log(removeOrderBias)/log(.5));
 		int removeIndex = wrap(start + (int)(removePoint * (length() - 1)));
