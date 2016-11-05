@@ -30,6 +30,8 @@ public class Starburst extends JDesktopPane {
 	private int[] pixels;
 	public boolean current[][];
 	public PixelOperationsList operations;
+	private int[] pixelOrder;
+	private int pixelNum;
 
 	public Pair centerPair;
 	private PropertyManager propertyManager;
@@ -349,6 +351,13 @@ public class Starburst extends JDesktopPane {
 		System.out.println(properties);
 		//loadPixels();
 		pixels = new int[canvas.getWidth() * canvas.getHeight() * canvas.getRaster().getNumBands()];
+		if(properties.getAsBoolean("saveGenerationOrder")) {
+			// should be *2, but I'm adding some extra space because it sometimes seems necessary
+			pixelOrder = new int[canvas.getWidth() * canvas.getHeight() * 3];
+			pixelNum = 0;
+		} else {
+			pixelOrder = null;
+		}
 		if(properties.getAsBoolean("renderDuringGeneration")) {
 			savePixels();
 		}
@@ -524,8 +533,43 @@ public class Starburst extends JDesktopPane {
 			window.pack();
 			window.setVisible(true);
 			break;
+		case 'r':
+			exec.execute(new Runnable() {
+				@Override
+				public void run() {
+					renderVideo();
+				}
+			});
+			break;
 		default:
 			if(key != 27) asyncNewImage();
+		}
+	}
+
+	private void renderVideo() {
+		File outputDirectory = chooseFile(JFileChooser.SAVE_DIALOG, JFileChooser.DIRECTORIES_ONLY);
+		if(outputDirectory != null) {
+			if(isNamedAfterAncestor(outputDirectory)) {
+				outputDirectory = outputDirectory.getParentFile();
+			}
+			if(!outputDirectory.exists()) {
+				outputDirectory.mkdirs();
+			}
+		}
+		
+		int maxPixel = pixelNum;
+		properties.set("saveGenerationOrder", false);
+		for(int frame = 0; true; frame++) {
+			falsifyCurrent();
+			for(int i = 0; (i*2) + 1 < maxPixel; i++) {
+				current[pixelOrder[i*2]][pixelOrder[(i*2) + 1]] = true;
+				fillPixel(pixelOrder[i*2], pixelOrder[(i*2) + 1]);
+			}
+			if(outputDirectory != null) {
+				File frameFile = new File(String.format("%s/frame-%04d.png",
+						outputDirectory.getAbsolutePath(), frame));
+				save(frameFile);
+			}
 		}
 	}
 
@@ -642,6 +686,10 @@ public class Starburst extends JDesktopPane {
 //					(int)((((int)(x*scaleFactor))+1)/scaleFactor), 
 //					(int)((((int)(y*scaleFactor))+1)/scaleFactor), this);
 		}
+		if(properties.getAsBoolean("saveGenerationOrder")) {
+			pixelOrder[pixelNum++] = x;
+			pixelOrder[pixelNum++] = y;
+		}
 	}
 
 	private void falsifyCurrent() {
@@ -678,6 +726,7 @@ public class Starburst extends JDesktopPane {
 		if(y-1 >= 0) neighbors.add(new Pair(x, y-1));
 		if(x-1 >= 0) neighbors.add(new Pair(x-1, y));
 		if(y+1 < canvas.getHeight()) neighbors.add(new Pair(x, y+1));
+		neighbors.add(new Pair(x,y));
 		return neighbors;
 	}
 

@@ -205,5 +205,12 @@
 		"random": false,
 		"saved": false,
 		"initialValue": "1x"
+	},
+	"Save generation order": {
+		"category": "General",
+		"type": "boolean",
+		"saved": false,
+		"random": false,
+		"initialValue": false
 	}
 }
