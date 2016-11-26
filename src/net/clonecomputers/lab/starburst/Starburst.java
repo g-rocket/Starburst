@@ -565,6 +565,7 @@ public class Starburst extends JDesktopPane {
 				current[pixelOrder[i*2]][pixelOrder[(i*2) + 1]] = true;
 				fillPixel(pixelOrder[i*2], pixelOrder[(i*2) + 1]);
 			}
+			savePixels();
 			if(outputDirectory != null) {
 				File frameFile = new File(String.format("%s/frame-%04d.png",
 						outputDirectory.getAbsolutePath(), frame));
