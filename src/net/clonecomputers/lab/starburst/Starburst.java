@@ -4,7 +4,7 @@ import static java.lang.Math.*;
 import static net.clonecomputers.lab.starburst.util.StaticUtils.*;
 
 import java.awt.*;
-import java.awt.Dialog.ModalityType;
+import java.awt.Dialog.*;
 import java.awt.event.*;
 import java.awt.image.*;
 import java.io.*;
@@ -16,12 +16,14 @@ import java.util.concurrent.*;
 import javax.imageio.*;
 import javax.swing.*;
 
+import com.google.gson.*;
+
+import ar.com.hjg.pngj.*;
+import ar.com.hjg.pngj.chunks.*;
 import net.clonecomputers.lab.starburst.finalize.*;
 import net.clonecomputers.lab.starburst.properties.*;
 import net.clonecomputers.lab.starburst.seed.*;
 import net.clonecomputers.lab.starburst.util.*;
-import ar.com.hjg.pngj.*;
-import ar.com.hjg.pngj.chunks.*;
 
 public class Starburst extends JDesktopPane {
 	public Random rand = new Random();
@@ -540,6 +542,16 @@ public class Starburst extends JDesktopPane {
 					renderVideo();
 				}
 			});
+			break;
+		case 'k':
+			String curprops = propertyManager.exportToJson().toString();
+			Object in = javax.swing.JOptionPane.showInputDialog(this, 
+					"This string represents all of the image-generation settings.",
+					"Set Parameters", JOptionPane.QUESTION_MESSAGE, null, null, curprops);
+			if(in == null) return;
+			String input = in.toString();
+			if(input==null) return;
+			propertyManager.importFromJson(new JsonParser().parse(input));
 			break;
 		default:
 			if(key != 27) asyncNewImage();
