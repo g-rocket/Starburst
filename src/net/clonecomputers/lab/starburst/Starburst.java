@@ -553,9 +553,62 @@ public class Starburst extends JDesktopPane {
 			if(input==null) return;
 			propertyManager.importFromJson(new JsonParser().parse(input));
 			break;
+		case 'i':
+			File shapeFile = chooseFile(JFileChooser.OPEN_DIALOG, JFileChooser.FILES_ONLY, true);
+			if(shapeFile == null) {
+				System.out.println("cancled");
+				return;
+			}
+			try {
+				importCutouts(shapeFile);
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+			break;
 		default:
 			if(key != 27) asyncNewImage();
 		}
+	}
+
+	private void importCutouts(File shapeFile) throws FileNotFoundException, IOException {
+		BufferedImage shapeImage = ImageIO.read(shapeFile);
+		operations.clear();
+		operations.setRemoveOrderBias(properties.getAsDouble("removeOrderBias"));
+		pixels = new int[canvas.getWidth() * canvas.getHeight() * canvas.getRaster().getNumBands()];
+		for(int x = 0; x < current.length; x++) {
+			for(int y = 0; y < current[x].length; y++) {
+				int color = shapeImage.getRGB(x, y);
+				if((color & 0xff000000) > 0) {
+					int i = (x+(y*canvas.getWidth()))*3;
+					pixels[i]=red(color);
+					pixels[i+1]=green(color);
+					pixels[i+2]=blue(color);
+					current[x][y] = true;
+				} else {
+					current[x][y] = false;
+				}
+				if((color & 0xff000000) == 0xff000000) {
+					operations.addPoint(x, y);
+				}
+			}
+		}
+		if(properties.getAsBoolean("renderDuringGeneration")) {
+			savePixels();
+		}
+		exec.execute(new Runnable() {
+			@Override
+			public void run() {
+				generateImage();
+				operations.clear();
+				System.out.println("done generating");
+				if(properties.getAsDouble("probabilityOfInclusion") < 1) {
+					finalizeImage(properties.getSubproperty(String.class, "finalizationMethod"));
+				}
+				System.out.println("done finalizing");
+				savePixels();
+				System.out.println("done!");
+			}
+		});
 	}
 
 	private void renderVideo() {
@@ -599,25 +652,34 @@ public class Starburst extends JDesktopPane {
 		System.out.println(i);
 		return i;
 	}
-
+	
 	private File chooseFile(final int dialogType, final int selectionMode) {
+		return chooseFile(dialogType, selectionMode, false);
+	}
+
+	private File chooseFile(final int dialogType, final int selectionMode, boolean onAWTThread) {
 		final JFileChooser fc = new JFileChooser();
-		try {
-			SwingUtilities.invokeAndWait(new Runnable() {
-				@Override
-				public void run() {
-					fc.setCurrentDirectory(new java.io.File("."));
-					fc.setFileSelectionMode(selectionMode);
-					fc.setDialogType(dialogType);
-					fc.setMultiSelectionEnabled(false);
-					
-					fc.showDialog(Starburst.this, null);
-				}
-			});
-		} catch (InvocationTargetException e) {
-			throw new RuntimeException(e);
-		} catch (InterruptedException e) {
-			throw new RuntimeException(e);
+		Runnable doAWTStuff = new Runnable() {
+			@Override
+			public void run() {
+				fc.setCurrentDirectory(new java.io.File("."));
+				fc.setFileSelectionMode(selectionMode);
+				fc.setDialogType(dialogType);
+				fc.setMultiSelectionEnabled(false);
+				
+				fc.showDialog(Starburst.this, null);
+			}
+		};
+		if(onAWTThread) {
+			doAWTStuff.run();
+		} else {
+			try {
+				SwingUtilities.invokeAndWait(doAWTStuff);
+			} catch (InvocationTargetException e) {
+				throw new RuntimeException(e);
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
+			}
 		}
 		
 		return fc.getSelectedFile();
